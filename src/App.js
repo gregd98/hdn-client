@@ -5,33 +5,36 @@ import {
 } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import PropTypes from 'prop-types';
+import { useCookies } from 'react-cookie';
 import Login from './components/login.jsx';
-import APP_URL_PATH from './constants';
+import * as Constants from './constants';
+import Main from './components/main.jsx';
 
 function App() {
-  const loggedIn = useSelector((state) => ((state.user) ? state.user.loggedIn : false));
+  const loggedIn = useSelector((state) => state.user.loggedIn);
 
   return (
     <React.Fragment>
       <Router>
         <Switch>
-          <PrivateRoute path={APP_URL_PATH} exact>
-            <h1>Home page.</h1>
-          </PrivateRoute>
-          <LoginRoute path={`${APP_URL_PATH}login`}>
+          <LoginRoute path={`${Constants.APP_URL_PATH}login`}>
             <Login />
           </LoginRoute>
+          <PrivateRoute path={`${Constants.APP_URL_PATH}home`}>
+            <Main />
+          </PrivateRoute>
         </Switch>
       </Router>
     </React.Fragment>
   );
 
   function PrivateRoute({ children, ...rest }) {
-    return <Route {...rest} render={() => (loggedIn ? (children) : (<Redirect to={{ pathname: `${APP_URL_PATH}login` }} />))} />;
+    const [cookies] = useCookies(['loggedin']);
+    return <Route {...rest} render={() => ((cookies.loggedin === '1' || loggedIn) ? (children) : (<Redirect to={{ pathname: `${Constants.APP_URL_PATH}login` }} />))} />;
   }
 
   function LoginRoute({ children, ...rest }) {
-    return <Route {...rest} render={() => (loggedIn ? (<Redirect to={{ pathname: `${APP_URL_PATH}` }} />) : (children))} />;
+    return <Route {...rest} render={() => (loggedIn ? (<Redirect to={{ pathname: `${Constants.APP_URL_PATH}home` }} />) : (children))} />;
   }
 }
 
