@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useCookies } from 'react-cookie';
+import { useHistory } from 'react-router-dom';
 import { logIn } from '../actions/userActions';
 import * as Constants from '../constants';
 
@@ -13,6 +14,7 @@ const Login = () => {
   const [cookies, setCookie] = useCookies();
 
   const dispatch = useDispatch();
+  const history = useHistory();
 
   useEffect(() => {
     fetch(`${Constants.SERVER_PATH}api/userData`, {
@@ -67,6 +69,10 @@ const Login = () => {
     });
   };
 
+  const registerClicked = () => {
+    history.push(`${Constants.APP_URL_PATH}registration`);
+  };
+
   return (
     <div className="container col-sm-4">
       <form onSubmit={loginClicked}>
@@ -82,6 +88,7 @@ const Login = () => {
           {btnDisabled && <span className="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true" />}
           Log In
         </button>
+        <button onClick={registerClicked} type="button" className="btn btn-link">Sign Up</button>
       </form>
       {errorMessage && <div className="alert alert-danger mt-5" role="alert">{errorMessage}</div>}
     </div>
