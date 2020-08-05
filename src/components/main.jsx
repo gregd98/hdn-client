@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useCookies } from 'react-cookie';
 import { logOut, fetchUserData } from '../actions/userActions';
 import * as Constants from '../constants';
+import Staff from './staff.jsx';
 
 const Main = () => {
   const userData = useSelector((state) => state.user.userData);
@@ -19,13 +20,9 @@ const Main = () => {
     fetch(`${Constants.SERVER_PATH}api/userData`, {
       method: 'GET',
       credentials: 'include',
-    }).then((result) => {
-      console.log(result.status);
-      return result.json();
-    }).then((result) => {
+    }).then((result) => result.json()).then((result) => {
       if (result.succeed) {
-        console.log('User data fetched.');
-        dispatch(fetchUserData(result.userData));
+        dispatch(fetchUserData(result.payload));
       } else if (!result.authenticated) {
         removeCookie('loggedin', { path: '/' });
         dispatch(logOut());
@@ -45,6 +42,7 @@ const Main = () => {
       console.log(result);
       if (result.succeed) {
         console.log('Logout succeed.');
+        removeCookie('loggedin', { path: '/' });
         dispatch(logOut());
       } else {
         console.log('Logout failed.');
@@ -67,6 +65,9 @@ const Main = () => {
               <Link to={`${url}`} className="nav-link">Home</Link>
             </li>
             <li className="nav-item">
+              <Link to={`${url}/staff`} className="nav-link">Staff</Link>
+            </li>
+            <li className="nav-item">
               <Link to={`${url}/games`} className="nav-link">Games</Link>
             </li>
             <li className="nav-item">
@@ -78,8 +79,8 @@ const Main = () => {
                 {`${userData.lastName} ${userData.firstName}`}
               </Link>
               <div className="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                <Link to={`${url}/account`} className="dropdown-item">Account</Link>
-                <button  onClick={logoutClicked} className="dropdown-item">Log Out</button>
+                <Link to={`${url}/account`} className="btn shadow-none dropdown-item">Account</Link>
+                <button onClick={logoutClicked} className="btn shadow-none rounded-0 dropdown-item">Log Out</button>
               </div>
             </li>
           </ul>
@@ -87,7 +88,10 @@ const Main = () => {
       </nav>
         <Switch>
           <Route exact path={`${path}`}>
-            <h1>Fuck you</h1>
+            <h1>Home</h1>
+          </Route>
+          <Route path={`${path}/staff`}>
+            <Staff />
           </Route>
           <Route path={`${path}/games`}>
             <h1>Games</h1>

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import { signupConstraints as rules } from '../constraints/signupConstraints';
 import isValidCNP from '../utils/cnp';
 import calculatePasswordStrength from '../utils/password';
@@ -24,14 +25,16 @@ const Registration = () => {
   const [phone, setPhone] = useState({ value: '', error: '', ref: React.createRef() });
   const [cnp, setCnp] = useState({ value: '', error: '', ref: React.createRef() });
   const [shirtType, setShirtType] = useState({
-    selectedId: 0, error: '', options: [{ id: 1, name: 'male' }, { id: 2, name: 'female' }], ref: React.createRef(),
+    selectedId: 0, error: '', options: [], ref: React.createRef(),
   });
   const [shirtSize, setShirtSize] = useState({
-    selectedId: 0, error: '', options: [{ id: 1, name: 'XXS' }, { id: 2, name: 'XS' }, { id: 3, name: 'S' }, { id: 4, name: 'M' }, { id: 5, name: 'L' }, { id: 6, name: 'XL' }, { id: 7, name: 'XXL' }], ref: React.createRef(),
+    selectedId: 0, error: '', options: [], ref: React.createRef(),
   });
   const [username, setUsername] = useState({ value: '', error: '', ref: React.createRef() });
   const [password, setPassword] = useState({ value: '', error: '', ref: React.createRef() });
   const [confirmPassword, setConfirmPassword] = useState({ value: '', error: '', ref: React.createRef() });
+  const [btnDisabled, setBtnDisabled] = useState(false);
+  const history = useHistory();
 
   const fields = {
     regCode: { state: regCode, setState: setRegCode, order: 1 },
@@ -107,6 +110,7 @@ const Registration = () => {
         block: 'start',
       });
     } else {
+      setBtnDisabled(true);
       fetch(`${Constants.SERVER_PATH}api/signup`, {
         method: 'POST',
         credentials: 'include',
@@ -121,75 +125,132 @@ const Registration = () => {
           shirtSize: shirtSize.selectedId,
           username: username.value,
           password: password.value,
-          confirmPassword: confirmPassword.value,
         }),
       }).then((result) => result.json()).then((result) => {
         if (result.succeed) {
           console.log('WIN');
+          // TODO valami zoldet a loginra
+          history.push(`${Constants.APP_URL_PATH}login`);
+        } else {
+          setBtnDisabled(false);
+          if (result.message) {
+            console.log(result.message);
+            // TODO hibauzenet
+          } else {
+            let minOrder = 999,
+              minKey = '';
+            Object.entries(result.inputErrors)
+              .forEach(([key, value]) => {
+                if (fields[key].order < minOrder) {
+                  minOrder = fields[key].order;
+                  minKey = key;
+                }
+                fields[key].setState((rest) => ({ ...rest, error: value }));
+              });
+            fields[minKey].state.ref.current.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start',
+            });
+          }
         }
       }).catch((error) => {
+        setBtnDisabled(false);
         console.log(`Error: ${error.message}`);
+        // TODO netw error
       });
     }
   };
 
+  useEffect(() => {
+    fetch(`${Constants.SERVER_PATH}api/shirtTypes`, {
+      method: 'GET',
+      credentials: 'include',
+    }).then((result) => result.json()).then((result) => {
+      if (result.succeed) {
+        setShirtType((state) => ({ ...state, options: result.payload }));
+      } else {
+        // TODO ha nem tudjuk betolteni
+      }
+    });
+    fetch(`${Constants.SERVER_PATH}api/shirtSizes`, {
+      method: 'GET',
+      credentials: 'include',
+    }).then((result) => result.json()).then((result) => {
+      if (result.succeed) {
+        setShirtSize((state) => ({ ...state, options: result.payload }));
+      } else {
+        // TODO ha nem tudjuk betolteni
+      }
+    });
+  }, []);
+
+  const loginClicked = () => {
+    history.push(`${Constants.APP_URL_PATH}login`);
+  };
+
   return (
-    <form onSubmit={signUpClicked}>
-      <Card title="Validation">
-        <FormGroup na={regCode.ref}>
-          <Input type="text" id="inputRegistrationCode" label="Registration code" state={regCode} setState={setRegCode} constraint={{ value: rules.regCode }} decorators={
-            [trimDecorator, upperCaseDecorator]} />
-        </FormGroup>
-      </Card>
-      <Card title="Personal data">
-        <FormRow>
-          <FormGroup mdSize="6" na={firstName.ref}>
-            <Input type="text" id="inputFirstName" label="First name" state={firstName} setState={setFirstName} constraint={{ value: rules.firstName }} decorators={
-              [trimDecorator, capitalizeDecorator]} />
+    <div className="d-flex justify-content-center">
+      <form onSubmit={signUpClicked}>
+        <Card title="Validation">
+          <FormGroup na={regCode.ref}>
+            <Input type="text" id="inputRegistrationCode" label="Registration code" state={regCode} setState={setRegCode} constraint={{ value: rules.regCode }} decorators={
+              [trimDecorator, upperCaseDecorator]} />
           </FormGroup>
-          <FormGroup mdSize="6" na={lastName.ref}>
-            <Input type="text" id="inputLastName" label="Last name" state={lastName} setState={setLastName} constraint={{ value: rules.lastName }} decorators={
-              [trimDecorator, capitalizeDecorator]} />
+        </Card>
+        <Card title="Personal data">
+          <FormRow>
+            <FormGroup mdSize="6" na={firstName.ref}>
+              <Input type="text" id="inputFirstName" label="First name" state={firstName} setState={setFirstName} constraint={{ value: rules.firstName }} decorators={
+                [trimDecorator, capitalizeDecorator]} />
+            </FormGroup>
+            <FormGroup mdSize="6" na={lastName.ref}>
+              <Input type="text" id="inputLastName" label="Last name" state={lastName} setState={setLastName} constraint={{ value: rules.lastName }} decorators={
+                [trimDecorator, capitalizeDecorator]} />
+            </FormGroup>
+          </FormRow>
+          <FormRow>
+            <FormGroup mdSize="6" na={email.ref}>
+              <Input type="text" id="inputEmail" label="Email" state={email} setState={setEmail} constraint={{ value: rules.email }} decorators={
+                [trimDecorator, lowerCaseDecorator]} />
+            </FormGroup>
+            <FormGroup mdSize="6" na={phone.ref}>
+              <Input type="text" id="inputPhone" label="Phone" state={phone} setState={setPhone} constraint={{ value: rules.phone }} decorators={[trimAllDecorator]} />
+            </FormGroup>
+          </FormRow>
+          <FormGroup na={cnp.ref}>
+            <Input type="text" id="inputCNP" label="CNP" state={cnp} setState={setCnp} constraint={{ value: rules.cnp }} decorators={[trimDecorator]} />
           </FormGroup>
-        </FormRow>
-        <FormRow>
-          <FormGroup mdSize="6" na={email.ref}>
-            <Input type="text" id="inputEmail" label="Email" state={email} setState={setEmail} constraint={{ value: rules.email }} decorators={
-              [trimDecorator, lowerCaseDecorator]} />
+          <FormRow>
+            <FormGroup mdSize="6">
+              <SelectInput id="inputShirtType" label="Shirt type" state={shirtType} setState={setShirtType} constraint={{ value: rules.shirtType }} />
+            </FormGroup>
+            <FormGroup mdSize="6">
+              <SelectInput id="inputShirtSize" label="Shirt size" state={shirtSize} setState={setShirtSize} constraint={{ value: rules.shirtSize }} />
+            </FormGroup>
+          </FormRow>
+        </Card>
+        <Card title="User data">
+          <FormGroup na={username.ref}>
+            <Input type="text" id="inputUsername" label="Username" state={username} setState={setUsername} constraint={{ value: rules.username }} decorators={[trimDecorator, lowerCaseDecorator]} />
           </FormGroup>
-          <FormGroup mdSize="6" na={phone.ref}>
-            <Input type="text" id="inputPhone" label="Phone" state={phone} setState={setPhone} constraint={{ value: rules.phone }} decorators={[trimAllDecorator]} />
-          </FormGroup>
-        </FormRow>
-        <FormGroup na={cnp.ref}>
-          <Input type="text" id="inputCNP" label="CNP" state={cnp} setState={setCnp} constraint={{ value: rules.cnp }} decorators={[trimDecorator]} />
-        </FormGroup>
-        <FormRow>
-          <FormGroup mdSize="6">
-            <SelectInput id="inputShirtType" label="Shirt type" state={shirtType} setState={setShirtType} constraint={{ value: rules.shirtType }} />
-          </FormGroup>
-          <FormGroup mdSize="6">
-            <SelectInput id="inputShirtSize" label="Shirt size" state={shirtSize} setState={setShirtSize} constraint={{ value: rules.shirtSize }} />
-          </FormGroup>
-        </FormRow>
-      </Card>
-      <Card title="User data">
-        <FormGroup na={username.ref}>
-          <Input type="text" id="inputUsername" label="Username" state={username} setState={setUsername} constraint={{ value: rules.username }} decorators={[trimDecorator, lowerCaseDecorator]} />
-        </FormGroup>
-        <FormRow>
-          <FormGroup mdSize="6" na={password.ref}>
-            <Input type="password" id="inputPassword" label="Password" state={password} setState={setPassword} constraint={{ value: rules.password }} />
-          </FormGroup>
-          <FormGroup mdSize="6" na={confirmPassword.ref}>
-            <Input type="password" id="inputConfirmPassword" label="Confirm password" state={confirmPassword} setState={setConfirmPassword} constraint={{ value: rules.confirmPassword }} />
-          </FormGroup>
-        </FormRow>
-      </Card>
-      <Card title="Submit">
-        <button type="submit" className="btn btn-primary btn-lg btn-block">Sign Up</button>
-      </Card>
-    </form>
+          <FormRow>
+            <FormGroup mdSize="6" na={password.ref}>
+              <Input type="password" id="inputPassword" label="Password" state={password} setState={setPassword} constraint={{ value: rules.password }} />
+            </FormGroup>
+            <FormGroup mdSize="6" na={confirmPassword.ref}>
+              <Input type="password" id="inputConfirmPassword" label="Confirm password" state={confirmPassword} setState={setConfirmPassword} constraint={{ value: rules.confirmPassword }} />
+            </FormGroup>
+          </FormRow>
+        </Card>
+        <Card title="Submit">
+          <button type="submit" className="btn btn-primary" disabled={btnDisabled}>
+            {btnDisabled && <span className="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true" />}
+            Sign Up
+          </button>
+          <button onClick={loginClicked} type="button" className="btn btn-outline-secondary ml-2">Back to log in</button>
+        </Card>
+      </form>
+    </div>
   );
 };
 
@@ -253,8 +314,8 @@ const Input = (prop) => {
   return (
     <React.Fragment>
       <label htmlFor={id}>{label}</label>
-      <input onChange={handleInputChange} onBlur={handleBlur}
-             type={type} className={classes} id={id} placeholder={label} value={state.value} />
+      <input onChange={handleInputChange} onBlur={handleBlur} type={type}
+             className={classes} id={id} placeholder={label} value={state.value} />
       {state.error && <div className="invalid-feedback">{state.error}</div>}
     </React.Fragment>
   );
@@ -288,7 +349,7 @@ const SelectInput = (prop) => {
     <React.Fragment>
     <label htmlFor={id}>{label}</label>
     <select onChange={handleInputChange} onBlur={handleBlur}
-            id={id} className={classes}>
+            id={id} className={classes} >
       <option />
       {state.options.map((item) => <option key={item.id} id={item.id}>{item.name}</option>)}
     </select>

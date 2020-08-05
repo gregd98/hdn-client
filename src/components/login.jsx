@@ -20,13 +20,10 @@ const Login = () => {
     fetch(`${Constants.SERVER_PATH}api/userData`, {
       method: 'GET',
       credentials: 'include',
-    }).then((result) => {
-      console.log(result.status);
-      return result.json();
-    }).then((result) => {
+    }).then((result) => result.json()).then((result) => {
       if (result.succeed) {
         console.log('Login succeed.');
-        dispatch(logIn(result.userData));
+        dispatch(logIn(result.payload));
       }
     }).catch((error) => {
       console.log(`Error: ${error.message}`);

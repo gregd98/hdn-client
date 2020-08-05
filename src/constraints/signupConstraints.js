@@ -65,7 +65,7 @@ export const signupConstraints = {
   username: {
     presence: required,
     length: {
-      minimum: 4,
+      minimum: 3,
       maximum: 25,
       tooShort: 'The username must be between 4 and 32 characters.',
       tooLong: 'The username must be between 4 and 32 characters.',
