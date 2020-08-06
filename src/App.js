@@ -18,14 +18,20 @@ function App() {
     <React.Fragment>
       <Router>
         <Switch>
-          <PrivateRoute path={`${Constants.APP_URL_PATH}home`}>
-            <Main />
-          </PrivateRoute>
           <PublicRoute path={`${Constants.APP_URL_PATH}login`}>
             <Login />
           </PublicRoute>
           <PublicRoute path={`${Constants.APP_URL_PATH}registration`}>
             <Registration />
+          </PublicRoute>
+          <PrivateRoute path={`${Constants.APP_URL_PATH}`}>
+            <Main />
+          </PrivateRoute>
+          <Route exact path="/">
+            <Redirect to={`${Constants.APP_URL_PATH}`} />
+          </Route>
+          <PublicRoute path="*">
+            <Redirect to={`${Constants.APP_URL_PATH}`} />
           </PublicRoute>
         </Switch>
       </Router>
@@ -38,7 +44,7 @@ function App() {
   }
 
   function PublicRoute({ children, ...rest }) {
-    return <Route {...rest} render={() => (loggedIn ? (<Redirect to={{ pathname: `${Constants.APP_URL_PATH}home` }} />) : (children))} />;
+    return <Route {...rest} render={() => (loggedIn ? (<Redirect to={{ pathname: `${Constants.APP_URL_PATH}` }} />) : (children))} />;
   }
 }
 

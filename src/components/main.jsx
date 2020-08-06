@@ -7,6 +7,7 @@ import { useCookies } from 'react-cookie';
 import { logOut, fetchUserData } from '../actions/userActions';
 import * as Constants from '../constants';
 import Staff from './staff.jsx';
+import Teams from './teams.jsx';
 
 const Main = () => {
   const userData = useSelector((state) => state.user.userData);
@@ -53,8 +54,11 @@ const Main = () => {
   return (
     <React.Fragment>
       <Router>
-      <nav className="navbar navbar-expand-lg navbar-light bg-light">
-        <Link to={`${url}`} className="navbar-brand">HDN</Link>
+      <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
+        <Link to={`${url}`} className="navbar-brand">
+          <img src="logo.svg" width="30" height="30" className="d-inline-block align-top mr-3" alt="" />
+          HDN
+        </Link>
         <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTogglerDemo02"
                 aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
           <span className="navbar-toggler-icon" />
@@ -65,16 +69,19 @@ const Main = () => {
               <Link to={`${url}`} className="nav-link">Home</Link>
             </li>
             <li className="nav-item">
-              <Link to={`${url}/staff`} className="nav-link">Staff</Link>
+              <Link to={`${Constants.APP_URL_PATH}staff`} className="nav-link">Staff</Link>
             </li>
             <li className="nav-item">
-              <Link to={`${url}/games`} className="nav-link">Games</Link>
+              <Link to={`${Constants.APP_URL_PATH}games`} className="nav-link">Games</Link>
             </li>
             <li className="nav-item">
-              <Link to={`${url}/teams`} className="nav-link">Teams</Link>
+              <Link to={`${Constants.APP_URL_PATH}teams`} className="nav-link">Teams</Link>
+            </li>
+            <li className="nav-item">
+              <Link to={`${Constants.APP_URL_PATH}players`} className="nav-link">Players</Link>
             </li>
             <li className="nav-item dropdown">
-              <Link to={`${url}/account`} className="nav-link dropdown-toggle" role="button" data-toggle="dropdown"
+              <Link to={`${Constants.APP_URL_PATH}account`} className="nav-link dropdown-toggle" role="button" data-toggle="dropdown"
                     aria-haspopup="true" aria-expanded="false">
                 {`${userData.lastName} ${userData.firstName}`}
               </Link>
@@ -90,17 +97,23 @@ const Main = () => {
           <Route exact path={`${path}`}>
             <h1>Home</h1>
           </Route>
-          <Route path={`${path}/staff`}>
+          <Route path={`${Constants.APP_URL_PATH}staff`}>
             <Staff />
           </Route>
-          <Route path={`${path}/games`}>
+          <Route path={`${Constants.APP_URL_PATH}games`}>
             <h1>Games</h1>
           </Route>
-          <Route path={`${path}/teams`}>
-            <h1>Teams</h1>
+          <Route path={`${Constants.APP_URL_PATH}teams`}>
+            <Teams />
           </Route>
-          <Route path={`${path}/account`}>
+          <Route path={`${Constants.APP_URL_PATH}players`}>
+            <h1>Players</h1>
+          </Route>
+          <Route path={`${Constants.APP_URL_PATH}account`}>
             <h1>Account</h1>
+          </Route>
+          <Route path="*">
+            <h3>Main error.</h3>
           </Route>
         </Switch>
       </Router>
