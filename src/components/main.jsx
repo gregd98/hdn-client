@@ -8,6 +8,11 @@ import { logOut, fetchUserData } from '../actions/userActions';
 import * as Constants from '../constants';
 import Staff from './staff.jsx';
 import Teams from './teams.jsx';
+import Team from './team.jsx';
+import Player from './player.jsx';
+import Players from './players.jsx';
+import Games from './games.jsx';
+import Beszarok from './beszarok.jsx';
 
 const Main = () => {
   const userData = useSelector((state) => state.user.userData);
@@ -101,13 +106,19 @@ const Main = () => {
             <Staff />
           </Route>
           <Route path={`${Constants.APP_URL_PATH}games`}>
-            <h1>Games</h1>
+            <Games />
           </Route>
-          <Route path={`${Constants.APP_URL_PATH}teams`}>
+          <Route exact path={`${Constants.APP_URL_PATH}teams`}>
             <Teams />
           </Route>
-          <Route path={`${Constants.APP_URL_PATH}players`}>
-            <h1>Players</h1>
+          <Route path={`${Constants.APP_URL_PATH}teams/:id`}>
+            <Team />
+          </Route>
+          <Route exact path={`${Constants.APP_URL_PATH}players`}>
+            <Players />
+          </Route>
+          <Route path={`${Constants.APP_URL_PATH}players/:id`}>
+            <Player />
           </Route>
           <Route path={`${Constants.APP_URL_PATH}account`}>
             <h1>Account</h1>

@@ -70,9 +70,9 @@ const Staff = () => {
   const searchInString = (text, searched) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().search(searched.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()) >= 0;
 
   return (
-      <div className="d-flex justify-content-center">
+      <div className="d-flex justify-content-center mt-4">
         <div style={{ width: 500 }}>
-          <h3 className="text-center">Staff</h3>
+          <h1 className="text-center display-4">Staff</h1>
           <div className="form-group mx-2 mt-4">
             <input onChange={handleSearchValueChanged} className="form-control" type="text" placeholder="Search" value={searchValue}/>
           </div>

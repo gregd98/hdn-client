@@ -3,7 +3,7 @@ import moment from 'moment';
 const isNumber = (value) => !Number.isNaN(Number(value));
 const control = [2, 7, 9, 1, 4, 6, 3, 5, 8, 2, 7, 9];
 
-const isValidCNP = (input) => {
+export const isValidCNP = (input) => {
   let hashResult = 0;
   const cnp = [];
 
@@ -44,4 +44,43 @@ const isValidCNP = (input) => {
   return cnp[12] === hashResult && moment(`${year}/${month}/${day}`, 'YYYY/M/D', true).isValid();
 };
 
-export default isValidCNP;
+export const getInformation = (input) => {
+  const cnp = [];
+  for (let i = 0; i < 13; i += 1) {
+    cnp[i] = parseInt(input[i], 10);
+  }
+
+  let year = cnp[1] * 10 + cnp[2];
+  switch (cnp[0]) {
+    case 1: case 2:
+      year += 1900;
+      break;
+    case 3: case 4:
+      year += 1800;
+      break;
+    case 5: case 6:
+      year += 2000;
+      break;
+    default:
+      return false;
+  }
+  let sex;
+  switch (cnp[0]) {
+    case 1: case 3: case 5:
+      sex = 'Male';
+      break;
+    default:
+      sex = 'Female';
+  }
+
+  const month = cnp[3] * 10 + cnp[4];
+  const day = cnp[5] * 10 + cnp[6];
+
+  const bornDate = moment(`${year}/${month}/${day}`, 'YYYY/M/D', true);
+  const now = moment();
+
+  const duration = moment.duration(now.diff(bornDate));
+  const age = Math.floor(duration.asYears());
+
+  return ({ bornDate: bornDate.format('YYYY-MMM-DD'), age, sex });
+};

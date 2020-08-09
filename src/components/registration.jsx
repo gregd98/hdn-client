@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { signupConstraints as rules } from '../constraints/signupConstraints';
-import isValidCNP from '../utils/cnp';
+import { isValidCNP } from '../utils/cnp';
 import calculatePasswordStrength from '../utils/password';
 import * as Constants from '../constants';
 

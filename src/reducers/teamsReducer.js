@@ -1,8 +1,10 @@
 import produce from 'immer';
 
 const defaultState = {
-  teams: [{ id: 1, name: 'Team 1' }, { id: 2, name: 'Team 2' }, { id: 3, name: 'Team 3' }],
+  teams: [],
   contacts: {},
+  teamsData: {},
+  players: [],
 };
 
 const teamsReducer = (state = defaultState, action) => {
@@ -15,6 +17,16 @@ const teamsReducer = (state = defaultState, action) => {
       return produce(state, (draft) => {
         draft.contacts = action.payload;
       });
+    case 'LOAD_TEAM':
+      return produce(state, (draft) => {
+        draft.teamsData[action.payload.team.id] = action.payload;
+      });
+    case 'LOAD_PLAYERS':
+      return produce(state, (draft) => {
+        draft.players = action.payload;
+      });
+    case 'LOG_OUT':
+      return defaultState;
     default:
       return state;
   }
