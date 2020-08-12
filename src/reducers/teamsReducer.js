@@ -1,4 +1,7 @@
 import produce from 'immer';
+import {
+  actionLoadTeams, actionLoadContacts, actionLoadTeam, actionLoadPlayers, actionLogOut,
+} from '../actions/actionTypes';
 
 const defaultState = {
   teams: [],
@@ -9,23 +12,23 @@ const defaultState = {
 
 const teamsReducer = (state = defaultState, action) => {
   switch (action.type) {
-    case 'LOAD_TEAMS':
+    case actionLoadTeams:
       return produce(state, (draft) => {
         draft.teams = action.payload;
       });
-    case 'LOAD_CONTACTS':
+    case actionLoadContacts:
       return produce(state, (draft) => {
         draft.contacts = action.payload;
       });
-    case 'LOAD_TEAM':
+    case actionLoadTeam:
       return produce(state, (draft) => {
         draft.teamsData[action.payload.team.id] = action.payload;
       });
-    case 'LOAD_PLAYERS':
+    case actionLoadPlayers:
       return produce(state, (draft) => {
         draft.players = action.payload;
       });
-    case 'LOG_OUT':
+    case actionLogOut:
       return defaultState;
     default:
       return state;

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useCookies } from 'react-cookie';
-import * as Constants from '../constants';
-import { loadPlayers } from '../actions/teamsActions';
+import * as Constants from '../../constants';
+import { loadPlayers } from '../../actions/teamsActions';
 import PlayerList from './player_list.jsx';
-import restFetch from '../utils/communication';
-import ErrorPage from './error_page.jsx';
+import restFetch from '../../utils/communication';
+import ErrorPage from '../error_page.jsx';
 
 const Players = () => {
   const players = useSelector((state) => state.teams.players);

@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useCookies } from 'react-cookie';
-import * as Constants from '../constants';
-import { loadTeam } from '../actions/teamsActions';
-import PlayerList from './player_list.jsx';
-import restFetch from '../utils/communication';
-import ErrorPage from './error_page.jsx';
-import LoadingPage from './loading_page.jsx';
+import * as Constants from '../../constants';
+import { loadTeam } from '../../actions/teamsActions';
+import PlayerList from '../players/player_list.jsx';
+import restFetch from '../../utils/communication';
+import ErrorPage from '../error_page.jsx';
+import LoadingPage from '../loading_page.jsx';
 
 const Team = () => {
   const { id } = useParams();

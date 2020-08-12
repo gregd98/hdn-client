@@ -1,4 +1,5 @@
 import produce from 'immer';
+import { actionLoadPosts, actionLoadPersons, actionLogOut } from '../actions/actionTypes';
 
 const defaultState = {
   posts: [],
@@ -7,15 +8,15 @@ const defaultState = {
 
 const staffReducer = (state = defaultState, action) => {
   switch (action.type) {
-    case 'LOAD_POSTS':
+    case actionLoadPosts:
       return produce(state, (draft) => {
         draft.posts = action.payload;
       });
-    case 'LOAD_USERS':
+    case actionLoadPersons:
       return produce(state, (draft) => {
         draft.persons = action.payload;
       });
-    case 'LOG_OUT':
+    case actionLogOut:
       return produce(state, (draft) => {
         draft.persons = [];
       });

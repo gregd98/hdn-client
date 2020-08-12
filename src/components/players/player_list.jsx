@@ -1,7 +1,7 @@
 import React from 'react';
 import { useHistory } from 'react-router-dom';
-import { getInformation } from '../utils/cnp';
-import * as Constants from '../constants';
+import { getInformation } from '../../utils/cnp';
+import * as Constants from '../../constants';
 
 const searchInString = (text, searched) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().search(searched.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()) >= 0;
 

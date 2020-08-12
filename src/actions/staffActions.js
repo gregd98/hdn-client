@@ -1,2 +1,4 @@
-export const loadPosts = (posts) => ({ type: 'LOAD_POSTS', payload: posts });
-export const loadPersons = (persons) => ({ type: 'LOAD_USERS', payload: persons });
+import { actionLoadPosts, actionLoadPersons } from './actionTypes';
+
+export const loadPosts = (posts) => ({ type: actionLoadPosts, payload: posts });
+export const loadPersons = (persons) => ({ type: actionLoadPersons, payload: persons });

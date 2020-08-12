@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useCookies } from 'react-cookie';
-import { getInformation } from '../utils/cnp';
-import * as Constants from '../constants';
-import restFetch from '../utils/communication';
-import ErrorPage from './error_page.jsx';
+import { getInformation } from '../../utils/cnp';
+import * as Constants from '../../constants';
+import restFetch from '../../utils/communication';
+import ErrorPage from '../error_page.jsx';
 
 const Player = () => {
   const { id } = useParams();

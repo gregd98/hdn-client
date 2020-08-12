@@ -1,25 +1,35 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useCookies } from 'react-cookie';
-import restFetch from '../utils/communication';
-import * as Constants from '../constants';
-import { loadPlayers } from '../actions/teamsActions';
-import GameCard from './game_card.jsx';
+import restFetch from '../../utils/communication';
+import * as Constants from '../../constants';
+import { loadDays, loadGames } from '../../actions/eventActions';
+import GameList from './game_list.jsx';
 
 const Games = () => {
+
+  const [pageError, setPageError] = useState({});
+
+  const days = useSelector((state) => state.event.days);
+  const games = useSelector((state) => state.event.games);
+
   const inputRef = useRef();
   const navRef = useRef();
-
-  const [games, setGames] = useState([]);
-  const [pageError, setPageError] = useState({});
 
   const dispatch = useDispatch();
   const cookies = useCookies();
   const removeCookie = cookies[2];
 
   useEffect(() => {
+    restFetch(`${Constants.SERVER_PATH}api/days`, (payload) => {
+      dispatch(loadDays(payload.map((day) => new Date(day))));
+    }, setPageError, dispatch, removeCookie);
+  }, [dispatch, removeCookie]);
+
+  useEffect(() => {
     restFetch(`${Constants.SERVER_PATH}api/games`, (payload) => {
-      setGames(payload);
+      dispatch(loadGames(payload));
+      // setGames(payload);
     }, setPageError, dispatch, removeCookie);
   }, [dispatch, removeCookie]);
 
@@ -39,10 +49,6 @@ const Games = () => {
       window.removeEventListener('resize', ress);
     };
   });
-
-  const kecske = (id) => {
-    console.log(id);
-  };
 
   return (
     <div className="d-flex justify-content-center mt-4">
@@ -64,23 +70,7 @@ const Games = () => {
         </ul>
         <div className="tab-content" id="myTabContent">
           <div className="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
-            <nav id="navbar-example2" className="navbar navbar-light bg-light sticky-top">
-              <a className="navbar-brand" href="#">Navbar</a>
-              <ul className="nav nav-pills">
-                <li className="nav-item">
-                  <button className="btn btn-link nav-link active">egy</button>
-                </li>
-                <li className="nav-item">
-                  <a className="nav-link">ketto</a>
-                </li>
-                <li className="nav-item">
-                  <a className="nav-link">harom</a>
-                </li>
-              </ul>
-            </nav>
-            <div data-spy="scroll" data-target="#navbar-example2" data-offset="0">
-              {games.map((game) => <GameCard click={kecske} key={game.id} game={game} />)}
-            </div>
+            <GameList days={days} games={games} />
           </div>
           <div className="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
             Ketto

@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useCookies } from 'react-cookie';
 import { useHistory, useRouteMatch } from 'react-router-dom';
-import * as Constants from '../constants';
-import { loadContacts, loadTeams } from '../actions/teamsActions';
-import restFetch from '../utils/communication';
-import ErrorPage from './error_page.jsx';
-import LoadingPage from './loading_page.jsx';
+import * as Constants from '../../constants';
+import { loadContacts, loadTeams } from '../../actions/teamsActions';
+import restFetch from '../../utils/communication';
+import ErrorPage from '../error_page.jsx';
+import LoadingPage from '../loading_page.jsx';
 
 const Teams = () => {
   const teams = useSelector((state) => state.teams.teams);

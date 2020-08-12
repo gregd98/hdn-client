@@ -7,12 +7,11 @@ import { useCookies } from 'react-cookie';
 import { logOut, fetchUserData } from '../actions/userActions';
 import * as Constants from '../constants';
 import Staff from './staff.jsx';
-import Teams from './teams.jsx';
-import Team from './team.jsx';
-import Player from './player.jsx';
-import Players from './players.jsx';
-import Games from './games.jsx';
-import Beszarok from './beszarok.jsx';
+import Teams from './teams/teams.jsx';
+import Team from './teams/team.jsx';
+import Player from './players/player.jsx';
+import Players from './players/players.jsx';
+import Games from './games/games.jsx';
 
 const Main = () => {
   const userData = useSelector((state) => state.user.userData);
