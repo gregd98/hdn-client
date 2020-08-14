@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 const GameCard = (input) => {
-  const { game } = input;
+  const { game, reff } = input;
   const [time, setTime] = useState('');
 
   useEffect(() => {
@@ -11,7 +11,7 @@ const GameCard = (input) => {
   }, [game.startTime, game.endTime]);
 
   return (
-    <div className="card shadow-sm mt-2">
+    <div ref={reff} className="card shadow-sm mt-2">
       <div className="card-header bg-transparent py-1">{time}</div>
         <div className="card-body pb-0">
           <h5 className="card-title">{game.name}</h5>

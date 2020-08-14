@@ -4,7 +4,7 @@ import { useCookies } from 'react-cookie';
 import { useHistory, useRouteMatch } from 'react-router-dom';
 import * as Constants from '../../constants';
 import { loadContacts, loadTeams } from '../../actions/teamsActions';
-import restFetch from '../../utils/communication';
+import { restFetch } from '../../utils/communication';
 import ErrorPage from '../error_page.jsx';
 import LoadingPage from '../loading_page.jsx';
 

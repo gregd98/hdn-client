@@ -5,7 +5,7 @@ import { useCookies } from 'react-cookie';
 import * as Constants from '../../constants';
 import { loadTeam } from '../../actions/teamsActions';
 import PlayerList from '../players/player_list.jsx';
-import restFetch from '../../utils/communication';
+import { restFetch } from '../../utils/communication';
 import ErrorPage from '../error_page.jsx';
 import LoadingPage from '../loading_page.jsx';
 

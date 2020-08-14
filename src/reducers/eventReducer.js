@@ -1,5 +1,5 @@
 import produce from 'immer';
-import { actionLoadDays, actionLoadGames, actionLogOut } from '../actions/actionTypes';
+import { actionLoadDays, actionLoadGames, actionLogOut} from '../actions/actionTypes';
 
 const defaultState = {
   days: [],

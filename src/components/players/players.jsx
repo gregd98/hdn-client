@@ -4,7 +4,7 @@ import { useCookies } from 'react-cookie';
 import * as Constants from '../../constants';
 import { loadPlayers } from '../../actions/teamsActions';
 import PlayerList from './player_list.jsx';
-import restFetch from '../../utils/communication';
+import { restFetch2 } from '../../utils/communication';
 import ErrorPage from '../error_page.jsx';
 
 const Players = () => {
@@ -18,9 +18,11 @@ const Players = () => {
   const removeCookie = cookies[2];
 
   useEffect(() => {
-    restFetch(`${Constants.SERVER_PATH}api/players`, (payload) => {
-      dispatch(loadPlayers(payload));
-    }, setPageError, dispatch, removeCookie);
+    restFetch2(`${Constants.SERVER_PATH}api/players`, dispatch, removeCookie).then((result) => {
+      dispatch(loadPlayers(result));
+    }).catch((error) => {
+      setPageError(error);
+    });
   }, [dispatch, removeCookie]);
 
   const handleSearchValueChanged = (event) => {
