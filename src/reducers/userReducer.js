@@ -1,5 +1,5 @@
 import produce from 'immer';
-import { actionLogIn, actionFetchUserData, actionLogOut } from '../actions/actionTypes';
+import {actionLogIn, actionLoadUserData, actionLogOut, actionLoadPermissions } from '../actions/actionTypes';
 
 const defaultState = {
   loggedIn: false,
@@ -7,17 +7,22 @@ const defaultState = {
     firstName: '',
     lastName: '',
   },
+  permissions: [],
 };
 
 const userReducer = (state = defaultState, action) => {
   switch (action.type) {
-    case actionLogIn: case actionFetchUserData:
+    case actionLogIn: case actionLoadUserData:
       return produce(state, (draft) => {
         draft.loggedIn = true;
-        draft.userData = action.userData;
+        draft.userData = action.payload;
       });
     case actionLogOut:
       return defaultState;
+    case actionLoadPermissions:
+      return produce(state, (draft) => {
+        draft.permissions = action.payload;
+      });
     default:
       return state;
   }

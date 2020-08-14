@@ -4,7 +4,7 @@ import {
 } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useCookies } from 'react-cookie';
-import { logOut, fetchUserData } from '../actions/userActions';
+import { logOut, loadUserData } from '../actions/userActions';
 import * as Constants from '../constants';
 import Staff from './staff.jsx';
 import Teams from './teams/teams.jsx';
@@ -27,7 +27,7 @@ const Main = () => {
       credentials: 'include',
     }).then((result) => result.json()).then((result) => {
       if (result.succeed) {
-        dispatch(fetchUserData(result.payload));
+        dispatch(loadUserData(result.payload));
       } else if (!result.authenticated) {
         removeCookie('loggedin', { path: '/' });
         dispatch(logOut());

@@ -1,5 +1,8 @@
-import { actionLogIn, actionLogOut, actionFetchUserData } from './actionTypes';
+import {
+  actionLogIn, actionLogOut, actionLoadUserData, actionLoadPermissions,
+} from './actionTypes';
 
-export const logIn = (userData) => ({ type: actionLogIn, userData });
+export const logIn = (payload) => ({ type: actionLogIn, payload });
 export const logOut = () => ({ type: actionLogOut });
-export const fetchUserData = (userData) => ({ type: actionFetchUserData, userData });
+export const loadUserData = (payload) => ({ type: actionLoadUserData, payload });
+export const loadPermissions = (payload) => ({ type: actionLoadPermissions, payload });
