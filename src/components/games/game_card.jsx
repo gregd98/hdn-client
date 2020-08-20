@@ -5,9 +5,13 @@ const GameCard = (input) => {
   const [time, setTime] = useState('');
 
   useEffect(() => {
-    const start = game.startTime.split(/[- :]/);
-    const end = game.endTime.split(/[- :]/);
-    setTime(`${start[3]}:${start[4]} - ${end[3]}:${end[4]}`);
+    if (game.startTime) {
+      const start = game.startTime.split(/[- :]/);
+      const end = game.endTime.split(/[- :]/);
+      setTime(`${start[3]}:${start[4]} - ${end[3]}:${end[4]}`);
+    } else {
+      setTime('No time set.');
+    }
   }, [game.startTime, game.endTime]);
 
   return (

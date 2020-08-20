@@ -73,7 +73,7 @@ const GameList = () => {
     let lastDay = -1;
     games.forEach((game, i) => {
       const currentDay = (new Date(game.startTime)).getDate();
-      if (i === 0 || currentDay !== lastDay) {
+      if (game.startTime && (i === 0 || currentDay !== lastDay)) {
         nana.push({ ...game, ref: tmp[currentDay].ref });
         if (i === 0) {
           tmpRefs.push({ num: currentDay });

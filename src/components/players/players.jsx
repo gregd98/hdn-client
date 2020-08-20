@@ -38,7 +38,8 @@ const Players = () => {
             <input onChange={handleSearchValueChanged} className="form-control" type="text" placeholder="Search"
                    value={searchValue}/>
           </div>
-          <PlayerList players={players} withBadge={false} searchValue={searchValue}/>
+          <PlayerList
+            players={players} withBadge={false} searchValue={searchValue} withAge={true} />
         </div>
       </div>
     );

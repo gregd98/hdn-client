@@ -1,5 +1,7 @@
 import produce from 'immer';
-import {actionLogIn, actionLoadUserData, actionLogOut, actionLoadPermissions } from '../actions/actionTypes';
+import {
+  actionLogIn, actionLoadUserData, actionLogOut, actionLoadPermissions,
+} from '../actions/actionTypes';
 
 const defaultState = {
   loggedIn: false,

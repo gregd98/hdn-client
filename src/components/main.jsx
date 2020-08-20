@@ -4,17 +4,20 @@ import {
 } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useCookies } from 'react-cookie';
-import { logOut, loadUserData } from '../actions/userActions';
+import { logOut, loadUserData, loadPermissions } from '../actions/userActions';
 import * as Constants from '../constants';
-import Staff from './staff.jsx';
+import Staff from './staff/staff.jsx';
 import Teams from './teams/teams.jsx';
 import Team from './teams/team.jsx';
 import Player from './players/player.jsx';
 import Players from './players/players.jsx';
 import Games from './games/games.jsx';
+import GameForm from './games/game_form.jsx';
+import { restFetch2 } from '../utils/communication';
 
 const Main = () => {
   const userData = useSelector((state) => state.user.userData);
+  const userPermissions = useSelector((state) => state.user.permissions);
   const { path, url } = useRouteMatch();
   const dispatch = useDispatch();
 
@@ -22,36 +25,23 @@ const Main = () => {
   const removeCookie = cookies[2];
 
   useEffect(() => {
-    fetch(`${Constants.SERVER_PATH}api/userData`, {
-      method: 'GET',
-      credentials: 'include',
-    }).then((result) => result.json()).then((result) => {
-      if (result.succeed) {
-        dispatch(loadUserData(result.payload));
-      } else if (!result.authenticated) {
-        removeCookie('loggedin', { path: '/' });
-        dispatch(logOut());
-      } else {
-        console.log('Internal server error.');
-      }
-    }).catch((error) => {
-      console.log(`Error: ${error.message}`);
-    });
+    restFetch2(`${Constants.SERVER_PATH}api/userData`, dispatch, removeCookie).then((result) => {
+      dispatch(loadUserData(result));
+    }).then(() => restFetch2(`${Constants.SERVER_PATH}api/userPermissions`, dispatch, removeCookie))
+      .then((result) => {
+        dispatch(loadPermissions(result));
+      })
+      .catch((error) => {
+        console.log(`Error: ${error.message}`);
+      });
   }, [dispatch, removeCookie]);
 
   const logoutClicked = () => {
-    fetch(`${Constants.SERVER_PATH}api/logout`, {
-      method: 'GET',
-      credentials: 'include',
-    }).then((result) => result.json()).then((result) => {
-      console.log(result);
-      if (result.succeed) {
-        console.log('Logout succeed.');
-        removeCookie('loggedin', { path: '/' });
-        dispatch(logOut());
-      } else {
-        console.log('Logout failed.');
-      }
+    restFetch2(`${Constants.SERVER_PATH}api/logout`, dispatch, removeCookie).then(() => {
+      removeCookie('loggedin', { path: '/' });
+      dispatch(logOut());
+    }).catch((error) => {
+      console.log(`Error: ${error.message}`);
     });
   };
 
@@ -69,27 +59,21 @@ const Main = () => {
         </button>
         <div className="collapse navbar-collapse" id="navbarTogglerDemo02">
           <ul className="navbar-nav mr-auto mt-2 mt-lg-0">
-            <li className="nav-item">
-              <Link to={`${url}`} className="nav-link">Home</Link>
-            </li>
-            <li className="nav-item">
-              <Link to={`${Constants.APP_URL_PATH}staff`} className="nav-link">Staff</Link>
-            </li>
-            <li className="nav-item">
-              <Link to={`${Constants.APP_URL_PATH}games`} className="nav-link">Games</Link>
-            </li>
-            <li className="nav-item">
-              <Link to={`${Constants.APP_URL_PATH}teams`} className="nav-link">Teams</Link>
-            </li>
-            <li className="nav-item">
-              <Link to={`${Constants.APP_URL_PATH}players`} className="nav-link">Players</Link>
-            </li>
+            <NavbarItem to={`${url}`} title="Home" />
+            <NavbarItem to={`${Constants.APP_URL_PATH}games`} title="Games" />
+            <NavbarItem to={`${Constants.APP_URL_PATH}staff`} title="Staff" />
+            {userPermissions.includes(Constants.PERM_TEAMS_DATA_ACCESS) && (
+              <React.Fragment>
+                <NavbarItem to={`${Constants.APP_URL_PATH}teams`} title="Teams" />
+                <NavbarItem to={`${Constants.APP_URL_PATH}players`} title="Players" />
+              </React.Fragment>
+            )}
             <li className="nav-item dropdown">
               <Link to={`${Constants.APP_URL_PATH}account`} className="nav-link dropdown-toggle" role="button" data-toggle="dropdown"
                     aria-haspopup="true" aria-expanded="false">
                 {`${userData.lastName} ${userData.firstName}`}
               </Link>
-              <div className="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                <div className="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
                 <Link to={`${url}/account`} className="btn shadow-none dropdown-item">Account</Link>
                 <button onClick={logoutClicked} className="btn shadow-none rounded-0 dropdown-item">Log Out</button>
               </div>
@@ -106,6 +90,9 @@ const Main = () => {
           </Route>
           <Route path={`${Constants.APP_URL_PATH}games`}>
             <Games />
+          </Route>
+          <Route path={`${Constants.APP_URL_PATH}addGame`}>
+            <GameForm />
           </Route>
           <Route exact path={`${Constants.APP_URL_PATH}teams`}>
             <Teams />
@@ -130,5 +117,11 @@ const Main = () => {
     </React.Fragment>
   );
 };
+
+const NavbarItem = (input) => (
+    <li className="nav-item">
+      <Link to={input.to} className="nav-link">{input.title}</Link>
+    </li>
+);
 
 export default Main;

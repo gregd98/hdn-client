@@ -6,13 +6,16 @@ import * as Constants from '../../constants';
 const searchInString = (text, searched) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().search(searched.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()) >= 0;
 
 const PlayerList = (input) => {
+  const {
+    players, searchValue, withBadge, withAge,
+  } = input;
   const history = useHistory();
-  if (input.players.length > 0) {
+  if (players.length > 0) {
     return (
       <React.Fragment>
         <div className="list-group mt-4 mx-2">
-          {input.players
-            .filter((player) => !input.searchValue || searchInString(`${player.lastName} ${player.firstName}`, input.searchValue))
+          {players
+            .filter((player) => !searchValue || searchInString(`${player.lastName} ${player.firstName}`, searchValue))
             .map(
               (player) => {
                 const cnp = getInformation(player.cnp);
@@ -22,10 +25,10 @@ const PlayerList = (input) => {
                       <button onClick={() => history.push(`${Constants.APP_URL_PATH}players/${player.id}`)} className="btn btn-link m-0 p-0">
                         {player.lastName} {player.firstName}
                       </button>
-                      {(input.withBadge && player.rankId > 0) && <span className="badge badge-info ml-2">{player.rankId === 2 ? 'Leader' : 'Vice leader' }</span>}
+                      {(withBadge && player.rankId > 0) && <span className="badge badge-info ml-2">{player.rankId === 2 ? 'Leader' : 'Vice leader' }</span>}
                     </span>
                     <span>
-                        <span className={`badge badge-pill badge-${cnp.age >= 18 ? 'success' : 'warning'} mr-2`}>{cnp.age}</span>
+                        {withAge && <span className={`badge badge-pill badge-${cnp.age >= 18 ? 'success' : 'warning'} mr-2`}>{cnp.age}</span>}
                         <button type="button" className="btn btn-sm btn-outline-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                           Contact
                         </button>

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useCookies } from 'react-cookie';
-import * as Constants from '../constants';
-import { loadPosts, loadPersons } from '../actions/staffActions';
-import { logOut } from '../actions/userActions';
+import * as Constants from '../../constants';
+import { loadPosts, loadPersons } from '../../actions/staffActions';
+import { restFetch2 } from '../../utils/communication';
+import StaffList from './staff_list.jsx';
 
 const classNames = require('classnames');
 
@@ -19,40 +20,31 @@ const Staff = () => {
   const removeCookie = cookies[2];
 
   useEffect(() => {
-    fetch(`${Constants.SERVER_PATH}api/posts`, {
-      method: 'GET',
-      credentials: 'include',
-    }).then((result) => result.json()).then((result) => {
-      if (result.succeed) {
-        dispatch(loadPosts(result.payload));
-        setActivePostId(result.payload[0].id);
-      } else if (!result.authenticated) {
-        removeCookie('loggedin', { path: '/' });
-        dispatch(logOut());
-      } else {
-        console.log(result.message);
-      }
-    }).catch((error) => {
-      console.log(`Error: ${error.message}`);
-    });
-  }, [dispatch, removeCookie]);
+    const removeModal = () => {
+      window.$('#exampleModal').modal('hide');
+      window.$('body').removeClass('modal-open');
+      window.$('.modal-backdrop').remove();
+    };
+    window.onpopstate = removeModal;
+    return () => {
+      removeModal();
+      window.onpopstate = () => {};
+    };
+  }, []);
 
   useEffect(() => {
-    fetch(`${Constants.SERVER_PATH}api/users`, {
-      method: 'GET',
-      credentials: 'include',
-    }).then((result) => result.json()).then((result) => {
-      if (result.succeed) {
-        dispatch(loadPersons(result.payload));
-      } else if (!result.authenticated) {
-        removeCookie('loggedin', { path: '/' });
-        dispatch(logOut());
-      } else {
-        console.log(result.message);
+    restFetch2(`${Constants.SERVER_PATH}api/posts`, dispatch, removeCookie).then((result) => {
+      dispatch(loadPosts(result));
+      if (result.length > 0) {
+        setActivePostId(result[0].id);
       }
-    }).catch((error) => {
-      console.log(`Error: ${error.message}`);
-    });
+    }).then(() => restFetch2(`${Constants.SERVER_PATH}api/users`, dispatch, removeCookie)).then((result) => {
+      dispatch(loadPersons(result));
+    })
+      .catch((error) => {
+        // TODO ide is majd valamilyen pageError kell
+        console.log(`Error: ${error.message}`);
+      });
   }, [dispatch, removeCookie]);
 
   const postClicked = (postId) => {
@@ -93,14 +85,9 @@ const Staff = () => {
               );
             })}
             </div>
-            <div className="list-group mt-2 mx-2">
-              {persons.filter((person) => person.postId === activePostId && (!searchValue || searchInString(`${person.lastName} ${person.firstName}`, searchValue)))
-                .map(
-                  (person) => <button onClick={() => personClicked(person)} key={person.id} type="button" className="list-group-item list-group-item-action" data-toggle="modal" data-target="#exampleModal">{person.lastName} {person.firstName}</button>,
-                )}
-            </div>
+            <StaffList users={persons} activePostId={activePostId} searchValue={searchValue} />
         </div>
-        <div className="modal fade" id="exampleModal"  role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div className="modal fade" id="exampleModal" tabIndex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-header">

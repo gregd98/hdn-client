@@ -46,7 +46,7 @@ const Team = () => {
               .filter((player) => player.rankId > 0)
               .map((player) => player.phone).join(',') : ''}`}>SMS to leaders</a>
           </div>
-          <PlayerList players={players} withBadge={true} />
+          <PlayerList players={players} withBadge={true} withAge={true}/>
         </div>
       </div>
     );

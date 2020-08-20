@@ -60,7 +60,7 @@ const Teams = () => {
           {teams.map((team) => (
             <div key={team.id} className="list-group-item list-group-item-action">
               <button onClick={() => history.push(`${path}/${team.id}`)} type="button"
-                      className="btn btn-link m-0 p-0">
+                      className="btn btn-link m-0 p-0 stretched-link">
                 {team.name}
               </button>
             </div>))

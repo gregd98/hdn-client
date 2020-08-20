@@ -53,3 +53,6 @@ App.propTypes = {
 };
 
 export default App;
+
+// TODO staffnal sajat magam ne lassam
+// TODO signupnal hibak, visszajelzesek
