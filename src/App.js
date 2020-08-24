@@ -4,7 +4,6 @@ import {
   BrowserRouter as Router, Route, Switch, Redirect,
 } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import PropTypes from 'prop-types';
 import { useCookies } from 'react-cookie';
 import Login from './components/login.jsx';
 import Registration from './components/registration.jsx';
@@ -38,21 +37,18 @@ function App() {
     </React.Fragment>
   );
 
-  function PrivateRoute({ children, ...rest }) {
+  function PrivateRoute(input) {
+    const { children, ...rest } = input;
     const [cookies] = useCookies(['loggedin']);
     return <Route {...rest} render={() => ((cookies.loggedin === '1' || loggedIn) ? (children) : (<Redirect to={{ pathname: `${Constants.APP_URL_PATH}login` }} />))} />;
   }
 
-  function PublicRoute({ children, ...rest }) {
+  function PublicRoute(input) {
+    const { children, ...rest } = input;
     return <Route {...rest} render={() => (loggedIn ? (<Redirect to={{ pathname: `${Constants.APP_URL_PATH}` }} />) : (children))} />;
   }
 }
 
-App.propTypes = {
-  children: PropTypes.any,
-};
-
 export default App;
 
-// TODO staffnal sajat magam ne lassam
 // TODO signupnal hibak, visszajelzesek

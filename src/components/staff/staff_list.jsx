@@ -1,11 +1,13 @@
 import React from 'react';
 import { useHistory } from 'react-router-dom';
 import * as Constants from '../../constants';
+import {useSelector} from 'react-redux';
 
 const searchInString = (text, searched) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().search(searched.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()) >= 0;
 
 const StaffList = (input) => {
   const { users, activePostId, searchValue } = input;
+  const userId = useSelector((state) => state.user.userData.id);
   const history = useHistory();
   if (users.length > 0) {
     return (
@@ -14,6 +16,7 @@ const StaffList = (input) => {
           {users
             .filter((user) => user.postId === activePostId)
             .filter((user) => !searchValue || searchInString(`${user.lastName} ${user.firstName}`, searchValue))
+            .filter((user) => user.id !== userId)
             .map(
               (user) => (
                 <div key={user.id} className="list-group-item list-group-item-action d-flex justify-content-between align-items-center" >

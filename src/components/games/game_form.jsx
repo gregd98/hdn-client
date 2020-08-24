@@ -67,8 +67,8 @@ const GameForm = () => {
   const simplifyNonRequiredField = (value) => (value.trim().length === 0 ? null : value);
   const dateToSqlFormat = (value) => value.toISOString().slice(0, 16).replace('T', ' ');
 
-  const saveGameClicked = (event) => {
-    event.preventDefault();
+  const saveGameClicked = (isDraft) => {
+    console.log(isDraft);
     let validationObj = {
       title: title.value,
       playerCount: playerCount.value,
@@ -168,7 +168,7 @@ const GameForm = () => {
   return (
     <div className="d-flex justify-content-center">
       <div style={{ width: 500 }}>
-        <form onSubmit={saveGameClicked}>
+        <form>
           <Card title="Game data">
             <FormGroup na={title.ref}>
               <Input type="text" id="inputTitle" label="Title" state={title} setState={setTitle} constraint={{ value: rules.title }} />
@@ -206,11 +206,11 @@ const GameForm = () => {
             </div>
           </Card>
           <Card title="Submit">
-            <button type="submit" className="btn btn-primary" disabled={btnDisabled}>
+            <button onClick={() => saveGameClicked(false)} type="button" className="btn btn-primary" disabled={btnDisabled}>
               {btnDisabled && <span className="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true" />}
               Save game
             </button>
-            <button type="button" className="btn btn-outline-secondary ml-2">Save game as draft</button>
+            <button onClick={() => saveGameClicked(true)} type="button" className="btn btn-outline-secondary ml-2">Save game as draft</button>
           </Card>
         </form>
       </div>

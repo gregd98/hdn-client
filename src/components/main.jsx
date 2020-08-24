@@ -12,6 +12,7 @@ import Team from './teams/team.jsx';
 import Player from './players/player.jsx';
 import Players from './players/players.jsx';
 import Games from './games/games.jsx';
+import Game from './games/game.jsx';
 import GameForm from './games/game_form.jsx';
 import { restFetch2 } from '../utils/communication';
 
@@ -34,7 +35,7 @@ const Main = () => {
       .catch((error) => {
         console.log(`Error: ${error.message}`);
       });
-  }, [dispatch, removeCookie]);
+  }, []);
 
   const logoutClicked = () => {
     restFetch2(`${Constants.SERVER_PATH}api/logout`, dispatch, removeCookie).then(() => {
@@ -88,8 +89,11 @@ const Main = () => {
           <Route path={`${Constants.APP_URL_PATH}staff`}>
             <Staff />
           </Route>
-          <Route path={`${Constants.APP_URL_PATH}games`}>
+          <Route exact path={`${Constants.APP_URL_PATH}games`}>
             <Games />
+          </Route>
+          <Route path={`${Constants.APP_URL_PATH}games/:id`}>
+            <Game />
           </Route>
           <Route path={`${Constants.APP_URL_PATH}addGame`}>
             <GameForm />

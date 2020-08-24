@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useHistory } from 'react-router-dom';
 import { useCookies } from 'react-cookie';
 import GameCard from './game_card.jsx';
-import { loadDays, loadGames } from '../../actions/eventActions';
+import { loadDays, loadAllGames, loadMyGames } from '../../actions/eventActions';
 import { restFetch2 } from '../../utils/communication';
 import * as Constants from '../../constants';
 import ErrorPage from '../error_page.jsx';
@@ -12,8 +13,20 @@ const classNames = require('classnames');
 
 // eslint-disable-next-line max-lines-per-function
 const GameList = () => {
+  const currentTab = useSelector((state) => state.event.currentTab);
   const days = useSelector((state) => state.event.days);
-  const games = useSelector((state) => state.event.games);
+  const games = useSelector((state) => {
+    switch (currentTab) {
+      case 'all':
+        return state.event.allGames;
+      case 'own':
+        return state.event.myGames;
+      case 'drafts':
+        return state.event.allGames;
+      default:
+        return state.event.allGames;
+    }
+  });
   const [buttons, setButtons] = useState({});
   const [uiGames, setUiGames] = useState([]);
 
@@ -23,20 +36,41 @@ const GameList = () => {
   const [pageError, setPageError] = useState({});
   const [refs, setRefs] = useState([]);
   const [selectedDay, setSelectedDay] = useState(0);
+  const history = useHistory();
 
   const navRef = React.createRef();
 
   useEffect(() => {
+    let gameUrl;
+    let loadFunc;
+    switch (currentTab) {
+      case 'all':
+        gameUrl = `${Constants.SERVER_PATH}api/games`;
+        loadFunc = loadAllGames;
+        break;
+      case 'own':
+        gameUrl = `${Constants.SERVER_PATH}api/games?own=true`;
+        loadFunc = loadMyGames;
+        break;
+      case 'drafts':
+        gameUrl = `${Constants.SERVER_PATH}api/games`;
+        loadFunc = loadAllGames;
+        break;
+      default:
+        gameUrl = `${Constants.SERVER_PATH}api/games`;
+        loadFunc = loadAllGames;
+    }
+
     restFetch2(`${Constants.SERVER_PATH}api/days`, dispatch, removeCookie).then((resultDays) => {
       dispatch(loadDays(resultDays.map((day) => new Date(day))));
-    }).then(() => restFetch2(`${Constants.SERVER_PATH}api/games`, dispatch, removeCookie))
+    }).then(() => restFetch2(gameUrl, dispatch, removeCookie))
       .then((resultGames) => {
-        dispatch(loadGames(resultGames));
+        dispatch(loadFunc(resultGames));
       })
       .catch((error) => {
         setPageError(error);
       });
-  }, [dispatch, removeCookie]);
+  }, [dispatch, currentTab, removeCookie]);
 
   const handleScroll = () => {
     if (refs.length > 0) {
@@ -91,7 +125,7 @@ const GameList = () => {
     setButtons(tmp);
     setRefs(tmpRefs);
     setUiGames(nana);
-  }, [days, games]);
+  }, [currentTab, days, games]);
 
   useScrollPosition(handleScroll);
 
@@ -106,7 +140,7 @@ const GameList = () => {
     return (
       <React.Fragment>
         <nav ref={navRef} className="navbar navbar-light bg-white sticky-top mt-2 border shadow-sm">
-          <a className="navbar-brand" href="#">Navbar</a>
+          <a className="navbar-brand" href="#">Navbar {currentTab}</a>
           <ul className="nav nav-pills">
             {Object.values(buttons).map((button) => {
               const classes = classNames({
@@ -127,7 +161,7 @@ const GameList = () => {
           </ul>
         </nav>
         <div>
-          {uiGames.map((game) => <GameCard reff={game.ref} click={() => console.log('Game clicked.')} key={game.id} game={game}/>)}
+          {uiGames.map((game) => <GameCard reference={game.ref} clickHandler={() => history.push(`${Constants.APP_URL_PATH}games/${game.id}`)} key={game.id} game={game}/>)}
         </div>
       </React.Fragment>
     );

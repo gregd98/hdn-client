@@ -1,15 +1,34 @@
-import React from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import GameList from './game_list.jsx';
 import * as Constants from '../../constants';
+import { setCurrentTab } from '../../actions/eventActions';
+
+const classNames = require('classnames');
 
 const Games = () => {
   const userPermissions = useSelector((state) => state.user.permissions);
   const history = useHistory();
+  const dispatch = useDispatch();
+  const [permAllGames, setPermAllGames] = useState(false);
+
+  useEffect(() => {
+    if (userPermissions.includes(Constants.PERM_ALL_GAME_ACCESS)) {
+      setPermAllGames(true);
+      dispatch(setCurrentTab('all'));
+    } else {
+      dispatch(setCurrentTab('own'));
+    }
+  }, [dispatch, userPermissions]);
 
   const addGameClicked = () => {
     history.push(`${Constants.APP_URL_PATH}addgame`);
+  };
+
+  const tabClicked = (e, type) => {
+    window.$(`#${e.target.id}`).tab('show');
+    dispatch(setCurrentTab(type));
   };
 
   return (
@@ -21,34 +40,39 @@ const Games = () => {
             <button onClick={addGameClicked} type="button" className="btn btn-outline-primary">Add game</button>
           </div>
         )}
-        <ul className="nav nav-tabs mt-4 sticky-top" id="myTab" role="tablist">
-          <li className="nav-item">
-            <a className="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home"
-               aria-selected="true">Home</a>
-          </li>
-          <li className="nav-item">
-            <a className="nav-link" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile"
-               aria-selected="false">Profile</a>
-          </li>
-          <li className="nav-item">
-            <a className="nav-link" id="contact-tab" data-toggle="tab" href="#contact" role="tab" aria-controls="contact"
-               aria-selected="false">Contact</a>
-          </li>
+        <ul className="nav nav-tabs mt-4" id="myTab" role="tablist">
+          {permAllGames && <TabHeader type="all" label="All games" active={true} click={tabClicked} /> }
+          <TabHeader type="own" label="My games" active={!permAllGames} click={tabClicked} />
+          {permAllGames && <TabHeader type="drafts" label="Drafts" active={false} click={tabClicked} /> }
         </ul>
         <div className="tab-content" id="myTabContent">
-          <div className="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+          <div className="tab-pane fade show active" id="tab-content">
             <GameList />
           </div>
-          <div className="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
-            Ketto
-          </div>
-          <div className="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab">
-            Harom
-          </div>
         </div>
-
       </div>
     </div>
+  );
+};
+
+const TabHeader = (input) => {
+  const {
+    type, label, active, click,
+  } = input;
+
+  const classes = classNames({
+    'nav-link': true,
+    btn: true,
+    'btn-link': true,
+    'shadow-none': true,
+    active,
+  });
+  return (
+    <li className="nav-item">
+      <button onClick={(e) => click(e, type)} className={classes} id={`${type}-tab`} data-target="#tab-content">
+        {label}
+      </button>
+    </li>
   );
 };
 
