@@ -69,16 +69,18 @@ const Main = () => {
                 <NavbarItem to={`${Constants.APP_URL_PATH}players`} title="Players" />
               </React.Fragment>
             )}
-            <li className="nav-item dropdown">
-              <Link to={`${Constants.APP_URL_PATH}account`} className="nav-link dropdown-toggle" role="button" data-toggle="dropdown"
-                    aria-haspopup="true" aria-expanded="false">
-                {`${userData.lastName} ${userData.firstName}`}
-              </Link>
-                <div className="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                <Link to={`${url}/account`} className="btn shadow-none dropdown-item">Account</Link>
-                <button onClick={logoutClicked} className="btn shadow-none rounded-0 dropdown-item">Log Out</button>
-              </div>
-            </li>
+          </ul>
+          <ul className="navbar-nav mt-2 mt-lg-0">
+          <li className="nav-item dropdown">
+            <Link to={`${Constants.APP_URL_PATH}account`} className="nav-link dropdown-toggle" role="button" data-toggle="dropdown"
+                  aria-haspopup="true" aria-expanded="false">
+              {`${userData.lastName} ${userData.firstName}`}
+            </Link>
+            <div className="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+              <Link to={`${url}/account`} className="btn shadow-none dropdown-item">Account</Link>
+              <button onClick={logoutClicked} className="btn shadow-none rounded-0 dropdown-item">Log Out</button>
+            </div>
+          </li>
           </ul>
         </div>
       </nav>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useCookies } from 'react-cookie';
+import { useHistory } from 'react-router-dom';
 import { restFetch2 } from '../../utils/communication';
 import * as Constants from '../../constants';
 import { loadGame } from '../../actions/eventActions';
@@ -13,8 +14,11 @@ const Game = () => {
   const users = useSelector((state) => state.staff.persons);
   const dispatch = useDispatch();
   const cookies = useCookies();
+  const history = useHistory();
   const removeCookie = cookies[2];
   const [contributors, setContributors] = useState(new Set());
+  const [assignmentsModal, setAssignmentsModal] = useState(true);
+  const [newOwner, setNewOwner] = useState({ id: 0, firstName: '', lastName: '' });
 
   useEffect(() => {
     restFetch2(`${Constants.SERVER_PATH}api/games/${id}`, dispatch, removeCookie).then((result) => {
@@ -61,32 +65,82 @@ const Game = () => {
     });
   };
 
-  const renderUserList = () => {
-    const toggleCheckbox = (userId) => {
-      const tmp = new Set(contributors);
-      if (tmp.has(userId)) {
-        tmp.delete(userId);
-      } else {
-        tmp.add(userId);
+  const moveOwner = (userId) => {
+    fetch(`${Constants.SERVER_PATH}api/games/${id}/moveOwner`, {
+      method: 'POST',
+      credentials: 'include',
+      body: JSON.stringify(userId),
+    }).then((result) => result.json()).then((result) => {
+      if (result.succeed) {
+        history.push(`${Constants.APP_URL_PATH}games`);
       }
-      setContributors(tmp);
-    };
+    });
+  };
 
+  const toggleCheckbox = (user) => {
+    const tmp = new Set(contributors);
+    if (tmp.has(user.id)) {
+      tmp.delete(user.id);
+    } else {
+      tmp.add(user.id);
+    }
+    setContributors(tmp);
+  };
+
+  const renderUserList = (withCheckbox, click = toggleCheckbox) => {
     return (
       <div className="list-group">
         {users
           .filter((user) => user.id !== gameData[id].ownerId)
           .map(
             (user) => (
-              <div onClick={() => toggleCheckbox(user.id)} key={user.id} className="list-group-item list-group-item-action d-flex justify-content-between align-items-center" >
+              <div onClick={() => click(user)} key={user.id} className="list-group-item list-group-item-action d-flex justify-content-between align-items-center clickable" >
                 <p className="m-0 p-0">{user.lastName} {user.firstName}</p>
-                <input onChange={() => toggleCheckbox(user.id)} className="form-check-input-lg" type="checkbox" id={`ch-${user.id}`} checked={contributors.has(user.id)}/>
+                {withCheckbox && (
+                  <input onChange={() => toggleCheckbox(user)} className="form-check-input-lg" type="checkbox" id={`ch-${user.id}`} checked={contributors.has(user.id)}/>
+                )}
               </div>
             ),
           )}
       </div>
     );
   };
+
+  const renderModal = () => {
+    return (
+      <div className="modal fade" id="staticBackdrop" data-backdrop="static" data-keyboard="false" tabIndex="-1"
+           aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div className="modal-dialog modal-dialog-scrollable">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title" id="staticBackdropLabel">{assignmentsModal ? 'Select contributors' : 'Move ownership to:'}</h5>
+              <button type="button" className="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div className="modal-body">
+              {assignmentsModal ? renderUserList(true) : renderUserList(false, (user) => {
+                console.log(`${user.id} clicked`);
+                // todo ide az uset
+                setNewOwner(user);
+                window.$('#staticBackdrop').modal('hide');
+                window.$('#exampleModal').modal('show');
+              })}
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" data-dismiss="modal">Close</button>
+              {assignmentsModal && (
+                <button onClick={() => {
+                  updateContributors();
+                }} type="button" className="btn btn-primary">Save changes</button>
+              )};
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
 
   const renderGamePage = () => {
     const game = gameData[id];
@@ -137,6 +191,7 @@ const Game = () => {
               </div>
               {game.permissions.includes('admin') && (
                 <button onClick={() => {
+                  setAssignmentsModal(true);
                   const tmp = new Set();
                   game.assignments.forEach((user) => tmp.add(user.id));
                   setContributors(tmp);
@@ -146,34 +201,36 @@ const Game = () => {
           )}
           {game.permissions.includes('admin') && (
             <Card title="Administration">
-              <button className="btn btn-outline-danger">Move ownership</button>
+              <button onClick={() => setAssignmentsModal(false)} className="btn btn-outline-danger" data-toggle="modal" data-target="#staticBackdrop">Move ownership</button>
               <button className="btn btn-outline-danger ml-2">Delete game</button>
             </Card>
           )};
         </div>
+        {renderModal()}
 
-        <div className="modal fade" id="staticBackdrop" data-backdrop="static" data-keyboard="false" tabIndex="-1"
-             aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div className="modal fade" id="exampleModal" data-backdrop="static" data-keyboard="false" tabIndex="-1"
+             aria-labelledby="exampleModalLabel" aria-hidden="true">
           <div className="modal-dialog modal-dialog-scrollable">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title" id="staticBackdropLabel">Modal title</h5>
+                <h5 className="modal-title" id="exampleModalLabel">Move ownership</h5>
                 <button type="button" className="close" data-dismiss="modal" aria-label="Close">
                   <span aria-hidden="true">&times;</span>
                 </button>
               </div>
               <div className="modal-body">
-                {renderUserList()}
+                {'Do you want to move '}<b>{game.name}</b>{'\'s ownership to '}<b>{newOwner.lastName} {newOwner.firstName}?</b>
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" className="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 <button onClick={() => {
-                  updateContributors();
-                }} type="button" className="btn btn-primary">Save changes</button>
+                  moveOwner(newOwner.id);
+                }} type="button" className="btn btn-primary">Move</button>
               </div>
             </div>
           </div>
         </div>
+
       </div>
     );
   };
