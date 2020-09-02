@@ -14,6 +14,5 @@ export const actionLoadPlayers = 'LOAD_PLAYERS';
 export const actionLoadDays = 'LOAD_DAYS';
 export const actionLoadAllGames = 'LOAD_ALL_GAMES';
 export const actionLoadMyGames = 'LOAD_MY_GAMES';
-export const actionLoadDrafts = 'LOAD_DRAFTS';
 export const actionSetCurrentGameTab = 'SET_CURRENT_GAME_TAB';
 export const actionLoadGame = 'LOAD_GAME';

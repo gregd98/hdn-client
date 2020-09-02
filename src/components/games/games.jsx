@@ -43,7 +43,6 @@ const Games = () => {
         <ul className="nav nav-tabs mt-4" id="myTab" role="tablist">
           {permAllGames && <TabHeader type="all" label="All games" active={true} click={tabClicked} /> }
           <TabHeader type="own" label="My games" active={!permAllGames} click={tabClicked} />
-          {permAllGames && <TabHeader type="drafts" label="Drafts" active={false} click={tabClicked} /> }
         </ul>
         <div className="tab-content" id="myTabContent">
           <div className="tab-pane fade show active" id="tab-content">

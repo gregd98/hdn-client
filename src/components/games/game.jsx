@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useHistory } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useCookies } from 'react-cookie';
-import { useHistory } from 'react-router-dom';
 import { restFetch2 } from '../../utils/communication';
 import * as Constants from '../../constants';
 import { loadGame } from '../../actions/eventActions';
 import { loadPersons } from '../../actions/staffActions';
+import { getTimeByDate, getWeekdayByDate } from '../../utils/mysql_date';
+
+const classNames = require('classnames');
 
 const Game = () => {
   const { id } = useParams();
@@ -19,6 +21,8 @@ const Game = () => {
   const [contributors, setContributors] = useState(new Set());
   const [assignmentsModal, setAssignmentsModal] = useState(true);
   const [newOwner, setNewOwner] = useState({ id: 0, firstName: '', lastName: '' });
+  const [dialogLoading, setDialogLoading] = useState(false);
+  const [dialogError, setDialogError] = useState('');
 
   useEffect(() => {
     restFetch2(`${Constants.SERVER_PATH}api/games/${id}`, dispatch, removeCookie).then((result) => {
@@ -33,7 +37,9 @@ const Game = () => {
 
   useEffect(() => {
     const removeModal = () => {
-      window.$('#staticBackdrop').modal('hide');
+      window.$('#listModal').modal('hide');
+      window.$('#moveOwnerDialog').modal('hide');
+      window.$('#deleteGameDialog').modal('hide');
       window.$('body').removeClass('modal-open');
       window.$('.modal-backdrop').remove();
     };
@@ -45,35 +51,66 @@ const Game = () => {
   }, []);
 
   const updateContributors = () => {
+    setDialogLoading(true);
     fetch(`${Constants.SERVER_PATH}api/games/${id}/assignments`, {
       method: 'POST',
       credentials: 'include',
       body: JSON.stringify(Array.from(contributors)),
     }).then((result) => result.json()).then((result) => {
+      setDialogLoading(false);
       if (result.succeed) {
-        window.$('#staticBackdrop').modal('hide');
+        window.$('#listModal').modal('hide');
         restFetch2(`${Constants.SERVER_PATH}api/games/${id}`, dispatch, removeCookie).then((res) => {
           dispatch(loadGame(res));
         }).catch((error) => {
           console.log(error.message);
         });
       } else {
-        console.log('Nem sikerult az update tess.');
+        setDialogError(result.message);
       }
     }).catch((error) => {
+      setDialogLoading(false);
+      setDialogError('Network error.');
       console.log(`Network error: ${error.messageg}`);
     });
   };
 
   const moveOwner = (userId) => {
+    setDialogLoading(true);
     fetch(`${Constants.SERVER_PATH}api/games/${id}/moveOwner`, {
       method: 'POST',
       credentials: 'include',
       body: JSON.stringify(userId),
     }).then((result) => result.json()).then((result) => {
+      setDialogLoading(false);
       if (result.succeed) {
         history.push(`${Constants.APP_URL_PATH}games`);
+      } else {
+        setDialogError(result.message);
       }
+    }).catch((error) => {
+      setDialogLoading(false);
+      setDialogError('Network error.');
+      console.log(error.message);
+    });
+  };
+
+  const deleteGame = () => {
+    setDialogLoading(true);
+    fetch(`${Constants.SERVER_PATH}api/games/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    }).then((result) => result.json()).then((result) => {
+      setDialogLoading(false);
+      if (result.succeed) {
+        history.push(`${Constants.APP_URL_PATH}games`);
+      } else {
+        setDialogError(result.message);
+      }
+    }).catch((error) => {
+      setDialogLoading(false);
+      setDialogError('Network error.');
+      console.log(error.message);
     });
   };
 
@@ -87,8 +124,7 @@ const Game = () => {
     setContributors(tmp);
   };
 
-  const renderUserList = (withCheckbox, click = toggleCheckbox) => {
-    return (
+  const renderUserList = (withCheckbox, click = toggleCheckbox) => (
       <div className="list-group">
         {users
           .filter((user) => user.id !== gameData[id].ownerId)
@@ -103,28 +139,26 @@ const Game = () => {
             ),
           )}
       </div>
-    );
-  };
+  );
 
-  const renderModal = () => {
+  const renderModal = (input) => {
+    const { errorMessage, isLoading } = input;
     return (
-      <div className="modal fade" id="staticBackdrop" data-backdrop="static" data-keyboard="false" tabIndex="-1"
-           aria-labelledby="staticBackdropLabel" aria-hidden="true">
+      <div className="modal fade" id="listModal" data-backdrop="static" data-keyboard="false" tabIndex="-1">
         <div className="modal-dialog modal-dialog-scrollable">
           <div className="modal-content">
             <div className="modal-header">
-              <h5 className="modal-title" id="staticBackdropLabel">{assignmentsModal ? 'Select contributors' : 'Move ownership to:'}</h5>
+              <h5 className="modal-title">{assignmentsModal ? 'Select contributors' : 'Move ownership to:'}</h5>
               <button type="button" className="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
             <div className="modal-body">
               {assignmentsModal ? renderUserList(true) : renderUserList(false, (user) => {
-                console.log(`${user.id} clicked`);
-                // todo ide az uset
+                setDialogError('');
                 setNewOwner(user);
-                window.$('#staticBackdrop').modal('hide');
-                window.$('#exampleModal').modal('show');
+                window.$('#listModal').modal('hide');
+                window.$('#moveOwnerDialog').modal('show');
               })}
             </div>
             <div className="modal-footer">
@@ -132,30 +166,33 @@ const Game = () => {
               {assignmentsModal && (
                 <button onClick={() => {
                   updateContributors();
-                }} type="button" className="btn btn-primary">Save changes</button>
+                }} type="button" className="btn btn-primary" disabled={isLoading}>
+                  {isLoading && <span className="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true" />}
+                  Save changes
+                </button>
               )};
             </div>
+            {errorMessage && <div className="alert alert-danger mx-2" role="alert">{errorMessage}</div>}
           </div>
         </div>
       </div>
     );
   };
 
-
   const renderGamePage = () => {
     const game = gameData[id];
     return (
       <div className="d-flex justify-content-center mt-2">
         <div style={{ width: 500 }}>
-          <div className="card border-dark my-2 mx-2 pt-1 pb-2 px-2 sticky-top">
-            <div>
-              <div className="d-flex justify-content-center mt-2">
-                <h2>{game.name}</h2>
-              </div>
+          <div className="card text-center border-dark my-2 mx-2  px-2 sticky-top">
+            <div className="card-body">
+              <h2 className="card-title">{game.name}</h2>
               <div className="d-flex justify-content-center mt-2">
                 <button className="btn btn-primary">Add score</button>
                 {game.permissions.includes('edit') && (
-                  <button className="btn btn-outline-secondary ml-2">Edit game</button>
+                  <button onClick={() => {
+                    history.push(`${Constants.APP_URL_PATH}games/${id}/edit`);
+                  }} className="btn btn-outline-secondary ml-2">Edit game</button>
                 )}
               </div>
             </div>
@@ -172,11 +209,17 @@ const Game = () => {
           )}
           <Card title="Details">
             <div className="list-group mt-4 mx-2">
-              <DetailItem label="Owner:" value={game.ownerId}/>
+              <DetailItem label="Owner:" value={`${game.lastName} ${game.firstName}`}/>
               {game.location && (
                 <DetailItem label="Location:" value={game.location}/>
               )}
               <DetailItem label="Player count:" value={game.playerCount}/>
+              {game.startTime && (
+                <React.Fragment>
+                  <DetailItem label="Day:" value={getWeekdayByDate(game.startTime)} />
+                  <DetailItem label="Time:" value={`${getTimeByDate(game.startTime)} - ${getTimeByDate(game.endTime)}`} />
+                </React.Fragment>
+              )}
             </div>
           </Card>
           {(game.assignments.length > 0 || game.permissions.includes('admin')) && (
@@ -191,45 +234,47 @@ const Game = () => {
               </div>
               {game.permissions.includes('admin') && (
                 <button onClick={() => {
+                  setDialogError('');
                   setAssignmentsModal(true);
                   const tmp = new Set();
                   game.assignments.forEach((user) => tmp.add(user.id));
                   setContributors(tmp);
-                }} className="btn btn-link mt-2" data-toggle="modal" data-target="#staticBackdrop" >Edit contributors</button>
+                }} className="btn btn-link mt-2" data-toggle="modal" data-target="#listModal" >Edit contributors</button>
               )}
             </Card>
           )}
           {game.permissions.includes('admin') && (
             <Card title="Administration">
-              <button onClick={() => setAssignmentsModal(false)} className="btn btn-outline-danger" data-toggle="modal" data-target="#staticBackdrop">Move ownership</button>
-              <button className="btn btn-outline-danger ml-2">Delete game</button>
+              <button onClick={() => setAssignmentsModal(false)} className="btn btn-outline-danger" data-toggle="modal" data-target="#listModal">Move ownership</button>
+              <button onClick={() => {
+                setDialogError('');
+                window.$('#deleteGameDialog').modal('show');
+              }} className="btn btn-outline-danger ml-2">Delete game</button>
             </Card>
-          )};
+          )}
         </div>
-        {renderModal()}
+        {renderModal({ errorMessage: dialogError, isLoading: dialogLoading })}
 
-        <div className="modal fade" id="exampleModal" data-backdrop="static" data-keyboard="false" tabIndex="-1"
-             aria-labelledby="exampleModalLabel" aria-hidden="true">
-          <div className="modal-dialog modal-dialog-scrollable">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title" id="exampleModalLabel">Move ownership</h5>
-                <button type="button" className="close" data-dismiss="modal" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-              <div className="modal-body">
-                {'Do you want to move '}<b>{game.name}</b>{'\'s ownership to '}<b>{newOwner.lastName} {newOwner.firstName}?</b>
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button onClick={() => {
-                  moveOwner(newOwner.id);
-                }} type="button" className="btn btn-primary">Move</button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ConfirmationDialog errorMessage={dialogError} isLoading={dialogLoading} id="moveOwnerDialog" title="Move ownership" text={
+          (
+            <React.Fragment>
+              {'Do you want to move '}<b>{game.name}</b>{'\'s ownership to '}<b>{newOwner.lastName} {newOwner.firstName}?</b>
+            </React.Fragment>
+          )
+        } confirmBtnText="Move" btnHandler={() => {
+          moveOwner(newOwner.id);
+        }} />
+
+        <ConfirmationDialog errorMessage={dialogError} isLoading={dialogLoading} id="deleteGameDialog" title="Delete game" text={
+          (
+            <React.Fragment>
+              {'Do you want to delete '}<b>{game.name}</b>?
+            </React.Fragment>
+          )
+        } confirmBtnText="Delete" btnType="danger" btnHandler={() => {
+          console.log(`Delete game ${game.name}`);
+          deleteGame();
+        }} />
 
       </div>
     );
@@ -255,5 +300,43 @@ const DetailItem = (input) => (
     <p className="p-0 m-0">{input.value}</p>
   </div>
 );
+
+const ConfirmationDialog = (input) => {
+  const {
+    id, title, text, confirmBtnText, btnHandler, errorMessage, isLoading,
+  } = input;
+  let { btnType } = input;
+  if (!btnType) {
+    btnType = 'primary';
+  }
+  const classes = classNames({
+    btn: true,
+    [`btn-${btnType}`]: true,
+  });
+
+  return (
+    <div className="modal fade" id={id} data-backdrop="static" data-keyboard="false" tabIndex="-1">
+      <div className="modal-dialog modal-dialog-scrollable">
+        <div className="modal-content">
+          <div className="modal-header">
+            <h5 className="modal-title">{title}</h5>
+            <button type="button" className="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div className="modal-body">{text}</div>
+          <div className="modal-footer">
+            <button type="button" className="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button onClick={() => btnHandler()} type="button" className={classes} disabled={isLoading}>
+              {isLoading && <span className="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true" />}
+              {confirmBtnText}
+            </button>
+          </div>
+          {errorMessage && <div className="alert alert-danger mx-2" role="alert">{errorMessage}</div>}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default Game;

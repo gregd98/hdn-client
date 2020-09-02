@@ -1,6 +1,6 @@
 import produce from 'immer';
 import {
-  actionLoadDays, actionLoadAllGames, actionLoadMyGames, actionLoadDrafts,
+  actionLoadDays, actionLoadAllGames, actionLoadMyGames,
   actionLogOut, actionSetCurrentGameTab, actionLoadGame,
 } from '../actions/actionTypes';
 
@@ -8,7 +8,6 @@ const defaultState = {
   days: [],
   allGames: [],
   myGames: [],
-  drafts: [],
   currentTab: '',
   gamesData: {},
 };
@@ -26,10 +25,6 @@ const eventReducer = (state = defaultState, action) => {
     case actionLoadMyGames:
       return produce(state, (draft) => {
         draft.myGames = action.payload;
-      });
-    case actionLoadDrafts:
-      return produce(state, (draft) => {
-        draft.drafts = action.payload;
       });
     case actionSetCurrentGameTab:
       return produce(state, (draft) => {

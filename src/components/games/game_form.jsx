@@ -1,22 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useCookies } from 'react-cookie';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useParams } from 'react-router-dom';
 import { gameConstraints as rules } from '../../constraints/gameConstraints';
 import { restFetch2 } from '../../utils/communication';
 import * as Constants from '../../constants';
+import { loadGame } from '../../actions/eventActions';
+import { getTimeByDate, getLongByDate } from '../../utils/mysql_date';
 
 const validate = require('validate.js');
 const  classNames = require('classnames');
 
-const GameForm = () => {
+const GameForm = (input) => {
+  const { edit } = input;
+  const { id } = useParams();
+  const gamesData = useSelector((state) => state.event.gamesData);
   const [title, setTitle] = useState({ value: '', error: '', ref: React.createRef() });
   const [playerCount, setPlayerCount] = useState({ value: 0, error: '', ref: React.createRef() });
   const [description, setDescription] = useState({ value: '', error: '', ref: React.createRef() });
   const [notes, setNotes] = useState({ value: '', error: '', ref: React.createRef() });
-  const [day, setDay] = useState({
-    selectedId: 0, error: '', options: [], ref: React.createRef(),
-  });
+  const [day, setDay] = useState({ options: [], error: '', ref: React.createRef() });
+  const [selectedDayId, setSelectedDayId] = useState(0);
   const [startTime, setStartTime] = useState({ value: '', error: '', ref: React.createRef() });
   const [endTime, setEndTime] = useState({ value: '', error: '', ref: React.createRef() });
   const [location, setLocation] = useState({ value: '', error: '', ref: React.createRef() });
@@ -50,25 +54,67 @@ const GameForm = () => {
   };
 
   useEffect(() => {
+    if (edit) {
+      restFetch2(`${Constants.SERVER_PATH}api/games/${id}`, dispatch, removeCookie).then((result) => {
+        dispatch(loadGame(result));
+      })
+        .catch((error) => {
+          console.log(error.message);
+        });
+    }
+  }, [edit, dispatch, id, removeCookie]);
+
+  useEffect(() => {
+    if (edit) {
+      if (gamesData[id]) {
+        setTitle({ ...title, value: gamesData[id].name });
+        setPlayerCount({ ...playerCount, value: gamesData[id].playerCount });
+
+        if (gamesData[id].description) {
+          setDescription({ ...title, value: gamesData[id].description });
+        }
+
+        if (gamesData[id].notes) {
+          setNotes({ ...notes, value: gamesData[id].notes });
+        }
+
+        if (gamesData[id].location) {
+          setLocation({ ...location, value: gamesData[id].location });
+        }
+
+        if (gamesData[id].startTime) {
+          setTimeDisabled(false);
+          setSelectedDayId(getLongByDate(gamesData[id].startTime));
+          setStartTime({ ...startTime, value: getTimeByDate(gamesData[id].startTime) });
+          setEndTime({ ...endTime, value: getTimeByDate(gamesData[id].endTime) });
+        } else {
+          setTimeDisabled(true);
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [edit, gamesData, id]);
+
+  useEffect(() => {
     restFetch2(`${Constants.SERVER_PATH}api/days`, dispatch, removeCookie).then((resultDays) => {
-      setDay((state) => ({
-        ...state,
+      setDay({
+        ...day,
         options: resultDays.map((item) => {
           const date = new Date(item);
           const newDate = new Date(date.getTime() + (date.getTimezoneOffset() * 60000));
           return ({ id: date.getTime(), name: newDate.toLocaleDateString('en-US', { weekday: 'long' }) });
         }),
-      }));
+      });
     }).catch((error) => {
       console.log(`Error: ${error.message}`);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, removeCookie]);
 
   const simplifyNonRequiredField = (value) => (value.trim().length === 0 ? null : value);
   const dateToSqlFormat = (value) => value.toISOString().slice(0, 16).replace('T', ' ');
 
-  const saveGameClicked = (isDraft) => {
-    console.log(isDraft);
+  const saveGameClicked = () => {
     let validationObj = {
       title: title.value,
       playerCount: playerCount.value,
@@ -81,7 +127,7 @@ const GameForm = () => {
     if (!timeDisabled) {
       validationObj = {
         ...validationObj,
-        day: day.selectedId,
+        day: selectedDayId,
         startTime: startTime.value,
         endTime: endTime.value,
       };
@@ -121,7 +167,7 @@ const GameForm = () => {
       };
 
       if (!timeDisabled) {
-        const selectedDay = Number.parseInt(day.selectedId, 10);
+        const selectedDay = selectedDayId;
         const t1 = startTime.value.split(':');
         const t2 = endTime.value.split(':');
         const start = (Number.parseInt(t1[0], 10) * 3600000) + (Number.parseInt(t1[1], 10) * 60000);
@@ -136,15 +182,18 @@ const GameForm = () => {
         data.startTime = null;
         data.endTime = null;
       }
+
+      const url = edit ? `${Constants.SERVER_PATH}api/games/${id}` : `${Constants.SERVER_PATH}api/games`;
+
       setBtnDisabled(true);
-      fetch(`${Constants.SERVER_PATH}api/games`, {
-        method: 'PUT',
+      fetch(url, {
+        method: edit ? 'POST' : 'PUT',
         credentials: 'include',
         body: JSON.stringify(data),
       }).then((result) => result.json()).then((result) => {
         if (result.succeed) {
           console.log('SUCCES');
-          history.push(`${Constants.APP_URL_PATH}games`);
+          history.replace(edit ? `${Constants.APP_URL_PATH}games/${id}` : `${Constants.APP_URL_PATH}games`);
         } else {
           let minOrder = 999,
             minKey = '';
@@ -189,7 +238,7 @@ const GameForm = () => {
           <Card title="Game time">
             <FormRow>
               <FormGroup mdSize="4" na={day.ref}>
-                <SelectInput id="inputDay" label="Day" state={day} setState={setDay} constraint={{ value: rules.day }} disabled={timeDisabled}/>
+                <SelectInput id="inputDay" label="Day" state={day} setState={setDay} selected={selectedDayId} setSelected={setSelectedDayId} constraint={{ value: rules.day }} disabled={timeDisabled}/>
               </FormGroup>
               <FormGroup mdSize="4" na={startTime.ref}>
                 <Input type="time" id="inputStartTime" label="Start time" state={startTime} setState={setStartTime} constraint={{ value: rules.time }} disabled={timeDisabled} />
@@ -201,16 +250,15 @@ const GameForm = () => {
             <div className="form-check">
               <input onChange={(e) => {
                 setTimeDisabled(e.target.checked);
-              }} className="form-check-input" type="checkbox" id="inputTimeLater" />
+              }} className="form-check-input" type="checkbox" id="inputTimeLater" checked={timeDisabled}/>
               <label className="form-check-label" htmlFor="inputTimeLater">Add later</label>
             </div>
           </Card>
           <Card title="Submit">
-            <button onClick={() => saveGameClicked(false)} type="button" className="btn btn-primary" disabled={btnDisabled}>
+            <button onClick={() => saveGameClicked()} type="button" className="btn btn-primary" disabled={btnDisabled}>
               {btnDisabled && <span className="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true" />}
-              Save game
+              {edit ? 'Edit game' : 'Save game'}
             </button>
-            <button onClick={() => saveGameClicked(true)} type="button" className="btn btn-outline-secondary ml-2">Save game as draft</button>
           </Card>
         </form>
       </div>
@@ -306,19 +354,21 @@ const Input = (prop) => {
 
 const SelectInput = (prop) => {
   const {
-    id, label, state, setState, constraint, disabled,
+    id, label, state, setState, selected, setSelected, constraint, disabled,
   } = prop;
 
   const handleInputChange = (event) => {
     const { selectedIndex } = event.target;
     const selectedId = event.target[selectedIndex].id;
-    setState((rest) => ({ ...rest, selectedId, error: '' }));
+    setSelected(Number.parseInt(selectedId, 10));
+    setState((rest) => ({ ...rest, error: '' }));
+    // setState((rest) => ({ ...rest, selectedId, error: '' }));
     // console.log(new Date(Number.parseInt(selectedId, 10)));
   };
 
   const handleBlur = () => {
-    const { selectedId } = state;
-    const validation = validate({ value: selectedId }, constraint, { fullMessages: false });
+    // const { selectedId } = state;
+    const validation = validate({ value: selected }, constraint, { fullMessages: false });
     if (validation) {
       setState((rest) => ({ ...rest, error: validation.value[0] }));
     }
@@ -329,6 +379,19 @@ const SelectInput = (prop) => {
     'is-invalid': !disabled && state.error,
   });
 
+  const findValue = () => {
+    if (selected === 0) {
+      return '';
+    }
+    for (let i = 0; i < state.options.length; i += 1) {
+      if (state.options[i].id === selected) {
+        console.log(state.options[i].name);
+        return state.options[i].name;
+      }
+    }
+    return '';
+  };
+
   return (
     <React.Fragment>
       <label htmlFor={id}>{label}</label>
@@ -337,8 +400,9 @@ const SelectInput = (prop) => {
         onBlur={handleBlur}
         id={id}
         className={classes}
-        disabled={disabled}>
-        <option />
+        disabled={disabled}
+        value={findValue()}>
+        <option value=""/>
         {state.options.map((item) => <option key={item.id} id={item.id}>{item.name}</option>)}
       </select>
       { !disabled && state.error && <div className="invalid-feedback">{state.error}</div>}

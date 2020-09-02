@@ -16,16 +16,10 @@ const GameList = () => {
   const currentTab = useSelector((state) => state.event.currentTab);
   const days = useSelector((state) => state.event.days);
   const games = useSelector((state) => {
-    switch (currentTab) {
-      case 'all':
-        return state.event.allGames;
-      case 'own':
-        return state.event.myGames;
-      case 'drafts':
-        return state.event.allGames;
-      default:
-        return state.event.allGames;
+    if (currentTab === 'all') {
+      return state.event.allGames;
     }
+    return state.event.myGames;
   });
   const [buttons, setButtons] = useState({});
   const [uiGames, setUiGames] = useState([]);
@@ -43,22 +37,12 @@ const GameList = () => {
   useEffect(() => {
     let gameUrl;
     let loadFunc;
-    switch (currentTab) {
-      case 'all':
-        gameUrl = `${Constants.SERVER_PATH}api/games`;
-        loadFunc = loadAllGames;
-        break;
-      case 'own':
-        gameUrl = `${Constants.SERVER_PATH}api/games?own=true`;
-        loadFunc = loadMyGames;
-        break;
-      case 'drafts':
-        gameUrl = `${Constants.SERVER_PATH}api/games`;
-        loadFunc = loadAllGames;
-        break;
-      default:
-        gameUrl = `${Constants.SERVER_PATH}api/games`;
-        loadFunc = loadAllGames;
+    if (currentTab === 'all') {
+      gameUrl = `${Constants.SERVER_PATH}api/games`;
+      loadFunc = loadAllGames;
+    } else {
+      gameUrl = `${Constants.SERVER_PATH}api/games?own=true`;
+      loadFunc = loadMyGames;
     }
 
     restFetch2(`${Constants.SERVER_PATH}api/days`, dispatch, removeCookie).then((resultDays) => {
@@ -140,7 +124,7 @@ const GameList = () => {
     return (
       <React.Fragment>
         <nav ref={navRef} className="navbar navbar-light bg-white sticky-top mt-2 border shadow-sm">
-          <a className="navbar-brand" href="#">Navbar {currentTab}</a>
+          <p className="navbar-brand my-0">{currentTab === 'all' ? 'All games' : 'My games'}</p>
           <ul className="nav nav-pills">
             {Object.values(buttons).map((button) => {
               const classes = classNames({

@@ -94,8 +94,11 @@ const Main = () => {
           <Route exact path={`${Constants.APP_URL_PATH}games`}>
             <Games />
           </Route>
-          <Route path={`${Constants.APP_URL_PATH}games/:id`}>
+          <Route exact path={`${Constants.APP_URL_PATH}games/:id`}>
             <Game />
+          </Route>
+          <Route path={`${Constants.APP_URL_PATH}games/:id/edit`}>
+            <GameForm edit={true}/>
           </Route>
           <Route path={`${Constants.APP_URL_PATH}addGame`}>
             <GameForm />
