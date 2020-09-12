@@ -191,8 +191,8 @@ const GameForm = (input) => {
         credentials: 'include',
         body: JSON.stringify(data),
       }).then((result) => result.json()).then((result) => {
+        setBtnDisabled(false);
         if (result.succeed) {
-          console.log('SUCCES');
           history.replace(edit ? `${Constants.APP_URL_PATH}games/${id}` : `${Constants.APP_URL_PATH}games`);
         } else {
           let minOrder = 999,
@@ -226,10 +226,10 @@ const GameForm = (input) => {
               <RangeInput id="inputPlayerCount" label="Player count" state={playerCount} setState={setPlayerCount} constraint={{ value: rules.playerCount }} min={0} max={16}/>
             </FormGroup>
             <FormGroup na={description.ref}>
-              <Input rows="4" id="inputDescription" label="Description" state={description} setState={setDescription} constraint={{ value: rules.area }} />
+              <Input rows="4" id="inputDescription" label="Description" state={description} setState={setDescription} constraint={{ value: rules.description }} />
             </FormGroup>
             <FormGroup na={notes.ref}>
-              <Input rows="4" id="inputNotes" label="Notes" state={notes} setState={setNotes} constraint={{ value: rules.area }} />
+              <Input rows="4" id="inputNotes" label="Notes" state={notes} setState={setNotes} constraint={{ value: rules.notes }} />
             </FormGroup>
             <FormGroup na={location.ref}>
               <Input type="text" id="inputLocation" label="Location" state={location} setState={setLocation} constraint={{ value: rules.location }} />

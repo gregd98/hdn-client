@@ -15,6 +15,8 @@ import Games from './games/games.jsx';
 import Game from './games/game.jsx';
 import GameForm from './games/game_form.jsx';
 import { restFetch2 } from '../utils/communication';
+import Scores from './games/scores.jsx';
+import ScoreTable from './ScoreTable.jsx';
 
 const Main = () => {
   const userData = useSelector((state) => state.user.userData);
@@ -69,6 +71,9 @@ const Main = () => {
                 <NavbarItem to={`${Constants.APP_URL_PATH}players`} title="Players" />
               </React.Fragment>
             )}
+            {userPermissions.includes(Constants.PERM_SCORE_TABLE_ACCESS) && (
+              <NavbarItem to={`${Constants.APP_URL_PATH}scores`} title="Scores" />
+            )}
           </ul>
           <ul className="navbar-nav mt-2 mt-lg-0">
           <li className="nav-item dropdown">
@@ -100,6 +105,9 @@ const Main = () => {
           <Route path={`${Constants.APP_URL_PATH}games/:id/edit`}>
             <GameForm edit={true}/>
           </Route>
+          <Route path={`${Constants.APP_URL_PATH}games/:id/scores`}>
+            <Scores />
+          </Route>
           <Route path={`${Constants.APP_URL_PATH}addGame`}>
             <GameForm />
           </Route>
@@ -111,6 +119,9 @@ const Main = () => {
           </Route>
           <Route exact path={`${Constants.APP_URL_PATH}players`}>
             <Players />
+          </Route>
+          <Route path={`${Constants.APP_URL_PATH}scores`}>
+            <ScoreTable />
           </Route>
           <Route path={`${Constants.APP_URL_PATH}players/:id`}>
             <Player />

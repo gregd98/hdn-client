@@ -4,6 +4,7 @@ import {
   BrowserRouter as Router, Route, Switch, Redirect,
 } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import PropTypes from 'prop-types';
 import { useCookies } from 'react-cookie';
 import Login from './components/login.jsx';
 import Registration from './components/registration.jsx';
@@ -37,17 +38,30 @@ function App() {
     </React.Fragment>
   );
 
-  function PrivateRoute(input) {
-    const { children, ...rest } = input;
+  // function PrivateRoute(input) {
+  //   const { children, ...rest } = input;
+  //   const [cookies] = useCookies(['loggedin']);
+  //   return <Route {...rest} render={() => ((cookies.loggedin === '1' || loggedIn) ? (children) : (<Redirect to={{ pathname: `${Constants.APP_URL_PATH}login` }} />))} />;
+  // }
+  //
+  // function PublicRoute(input) {
+  //   const { children, ...rest } = input;
+  //   return <Route {...rest} render={() => (loggedIn ? (<Redirect to={{ pathname: `${Constants.APP_URL_PATH}` }} />) : (children))} />;
+  // }
+
+  function PrivateRoute({ children, ...rest }) {
     const [cookies] = useCookies(['loggedin']);
     return <Route {...rest} render={() => ((cookies.loggedin === '1' || loggedIn) ? (children) : (<Redirect to={{ pathname: `${Constants.APP_URL_PATH}login` }} />))} />;
   }
 
-  function PublicRoute(input) {
-    const { children, ...rest } = input;
+  function PublicRoute({ children, ...rest }) {
     return <Route {...rest} render={() => (loggedIn ? (<Redirect to={{ pathname: `${Constants.APP_URL_PATH}` }} />) : (children))} />;
   }
 }
+
+App.propTypes = {
+  children: PropTypes.any,
+};
 
 export default App;
 

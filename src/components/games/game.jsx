@@ -188,7 +188,9 @@ const Game = () => {
             <div className="card-body">
               <h2 className="card-title">{game.name}</h2>
               <div className="d-flex justify-content-center mt-2">
-                <button className="btn btn-primary">Add score</button>
+                <button onClick={() => {
+                  history.push(`${Constants.APP_URL_PATH}games/${id}/scores`);
+                }} className="btn btn-primary">Add score</button>
                 {game.permissions.includes('edit') && (
                   <button onClick={() => {
                     history.push(`${Constants.APP_URL_PATH}games/${id}/edit`);

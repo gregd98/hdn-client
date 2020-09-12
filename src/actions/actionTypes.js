@@ -16,3 +16,5 @@ export const actionLoadAllGames = 'LOAD_ALL_GAMES';
 export const actionLoadMyGames = 'LOAD_MY_GAMES';
 export const actionSetCurrentGameTab = 'SET_CURRENT_GAME_TAB';
 export const actionLoadGame = 'LOAD_GAME';
+export const actionLoadScores = 'LOAD_SCORES';
+export const actionLoadAllScores = 'LOAD_ALL_SCORES';

@@ -28,7 +28,6 @@ const Teams = () => {
       setLoading(true);
     }
     restFetch(`${Constants.SERVER_PATH}api/teams`, (payload) => {
-      console.log('futaszar');
       dispatch(loadTeams(payload));
     }, setPageError, dispatch, removeCookie).then(() => restFetch(`${Constants.SERVER_PATH}api/leaderContacts`, (payload) => {
       dispatch(loadContacts(payload));
