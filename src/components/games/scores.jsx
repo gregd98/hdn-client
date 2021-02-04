@@ -2,10 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useCookies } from 'react-cookie';
-import { restFetch2 } from '../../utils/communication';
+import {
+  restDelete, restGet, restPost, restPut,
+} from '../../utils/communication';
 import * as Constants from '../../constants';
 import { loadTeams } from '../../actions/teamsActions';
 import { loadGame, loadScores } from '../../actions/eventActions';
+import ErrorPage from '../error_page.jsx';
+import LoadingPage from '../loading_page.jsx';
+
+const classNames = require('classnames');
 
 const Scores = () => {
   const { id } = useParams();
@@ -23,6 +29,13 @@ const Scores = () => {
   const [currentFairplay, setCurrentFairplay] = useState(false);
   const [editing, setEditing] = useState(false);
 
+  const [pageError, setPageError] = useState({});
+  const [isLoading, setLoading] = useState(false);
+
+  const [dialogLoading, setDialogLoading] = useState(false);
+  const [dialogError, setDialogError] = useState('');
+  const [inputError, setInputError] = useState('');
+
   const scoreSorter = (a, b) => {
     const x1 = a.score || a.score === 0,
       x2 = b.score || b.score === 0;
@@ -34,22 +47,29 @@ const Scores = () => {
         if (a.score < b.score) {
           return 1;
         }
-        return 0;
+        if (a.fairplay) {
+          return b.fairplay ? 0 : -1;
+        }
+        return b.fairplay ? 1 : 0;
       }
       return 1;
     }
-
     return x2 ? -1 : 0;
   };
 
   useEffect(() => {
-    restFetch2(`${Constants.SERVER_PATH}api/games/${id}`, dispatch, removeCookie).then((result) => {
+    setLoading(true);
+    restGet(`${Constants.SERVER_PATH}api/games/${id}`, dispatch, removeCookie).then((result) => {
       dispatch(loadGame(result));
-    }).then(() => restFetch2(`${Constants.SERVER_PATH}api/teams`, dispatch, removeCookie).then((result) => {
+    }).then(() => restGet(`${Constants.SERVER_PATH}api/teams`, dispatch, removeCookie).then((result) => {
       dispatch(loadTeams(result));
-    }).then(() => restFetch2(`${Constants.SERVER_PATH}api/games/${id}/scores`, dispatch, removeCookie).then((mScores) => {
+    }).then(() => restGet(`${Constants.SERVER_PATH}api/games/${id}/scores`, dispatch, removeCookie).then((mScores) => {
       dispatch(loadScores(id, mScores));
-    })));
+      setLoading(false);
+    }))).catch((error) => {
+      setPageError(error);
+      setLoading(false);
+    });
   }, [dispatch, id, removeCookie]);
 
   useEffect(() => {
@@ -63,8 +83,6 @@ const Scores = () => {
 
       teams.forEach((item) => {
         const scoreData = obj[item.id];
-        console.log('Csecs');
-        console.log(scoreData);
         if (scoreData) {
           output.push({ ...item, score: scoreData.score, fairplay: scoreData.fairplay });
         } else {
@@ -90,63 +108,126 @@ const Scores = () => {
   }, []);
 
   const updateScore = () => {
-    fetch(`${Constants.SERVER_PATH}api/games/${id}/scores`, {
-      method: editing ? 'POST' : 'PUT',
-      credentials: 'include',
-      body: JSON.stringify({
+    const checkInt = (str) => {
+      const s = String(str);
+      const n = Math.floor(Number(s));
+      return n !== Infinity && String(n) === s && n >= 0;
+    };
+
+    if (checkInt(currentScore)) {
+      setDialogLoading(true);
+      const body = {
         teamId: currentTeamId,
         score: Number(currentScore),
         fairplay: currentFairplay,
-      }),
-    }).then((result) => result.json()).then((result) => {
-      if (result.succeed) {
+      };
+      (editing ? restPost : restPut)(`${Constants.SERVER_PATH}api/games/${id}/scores`, body, dispatch, removeCookie).then(() => {
         window.$('#scoreModal').modal('hide');
-        restFetch2(`${Constants.SERVER_PATH}api/games/${id}/scores`, dispatch, removeCookie).then((mScores) => {
+        setDialogLoading(false);
+        restGet(`${Constants.SERVER_PATH}api/games/${id}/scores`, dispatch, removeCookie).then((mScores) => {
           dispatch(loadScores(id, mScores));
         }).catch((error) => {
-          console.log(error.message);
+          setPageError(error);
         });
-      } else {
-        console.log(result.message);
-      }
+      }).catch((error) => {
+        setDialogError(error.message);
+        setDialogLoading(false);
+      });
+    } else {
+      setInputError('Enter a number greater than or equal to 0.');
+    }
+  };
+
+  const deleteScore = () => {
+    setDialogLoading(true);
+    restDelete(`${Constants.SERVER_PATH}api/games/${id}/scores/${currentTeamId}`, dispatch, removeCookie).then(() => {
+      window.$('#scoreModal').modal('hide');
+      setDialogLoading(false);
+      restGet(`${Constants.SERVER_PATH}api/games/${id}/scores`, dispatch, removeCookie).then((mScores) => {
+        dispatch(loadScores(id, mScores));
+      }).catch((error) => {
+        setPageError(error);
+      });
+    }).catch((error) => {
+      setDialogError(error.message);
+      setDialogLoading(false);
     });
   };
 
-  const renderScoreModal = () => (
+  const renderScoreModal = () => {
+    const renderScoreInput = () => {
+      const classes = classNames({
+        'form-control': true,
+        'is-invalid': inputError,
+      });
+
+      return (
+        <React.Fragment>
+          <input autoComplete="off" onChange={(e) => {
+            setInputError('');
+            setCurrentScore(e.target.value);
+          }} type="number" min="0" className={classes} id="input_score" placeholder="Score" value={currentScore} disabled={dialogLoading}/>
+          {inputError && <div className="invalid-feedback">{inputError}</div>}
+        </React.Fragment>
+      );
+    };
+
+    return (
       <div className="modal fade" id="scoreModal" data-backdrop="static" data-keyboard="false" tabIndex="-1">
         <div className="modal-dialog">
           <div className="modal-content">
             <div className="modal-header">
               <h5 className="modal-title">Score</h5>
-              <button type="button" className="close" data-dismiss="modal" aria-label="Close">
+              <button type="button" className="close" data-dismiss="modal" aria-label="Close" disabled={dialogLoading}>
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
             <div className="modal-body">
-              <div className="form-group">
-                <label htmlFor="input_score" className="col-form-label">Score:</label>
-                <input autoComplete="off" onChange={(e) => {
-                  setCurrentScore(e.target.value);
-                }} type="text" className="form-control" id="input_score" value={currentScore} />
-              </div>
-              <div className="form-group form-check">
-                <input onChange={(e) => {
-                  setCurrentFairplay(e.target.checked);
-                }} autoComplete="off" type="checkbox" className="form-check-input" id="input_fairplay" checked={currentFairplay}/>
-                <label className="form-check-label" htmlFor="input_fairplay">Fair play</label>
+              <div className="form-row">
+                <div className="form-group col-md-6">
+                  {renderScoreInput()}
+                </div>
+                <div className="form-group col-md-6 align-self-center">
+                  <div className="form-check">
+                    <input onChange={(e) => {
+                      setCurrentFairplay(e.target.checked);
+                    }} autoComplete="off" type="checkbox" className="form-check-input" id="input_fairplay"
+                           checked={currentFairplay} disabled={dialogLoading}/>
+                    <label className="form-check-label" htmlFor="input_fairplay">Fair play</label>
+                  </div>
+                </div>
               </div>
             </div>
             <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" data-dismiss="modal">Close</button>
-              <button onClick={updateScore} type="button" className="btn btn-primary" disabled={false}>
-                {false && <span className="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true" />}
-                Save score
+              <button type="button" className="btn btn-secondary" data-dismiss="modal" disabled={dialogLoading}>Close
+              </button>
+              {editing && (
+                <button onClick={deleteScore} type="button" className="btn btn-danger" disabled={dialogLoading}>
+                  {dialogLoading
+                  && <span className="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"/>}
+                  Delete score
+                </button>
+              )}
+              <button onClick={updateScore} type="button" className="btn btn-primary" disabled={dialogLoading}>
+                {dialogLoading
+                && <span className="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"/>}
+                {editing ? 'Edit score' : 'Save score'}
               </button>
             </div>
+            {dialogError && <div className="alert alert-danger mx-2" role="alert">{dialogError}</div>}
           </div>
         </div>
       </div>
-  );
+    );
+  };
+
+  if (pageError.message) {
+    return <ErrorPage status={pageError.status} message={pageError.message} />;
+  }
+
+  if (isLoading) {
+    return <LoadingPage />;
+  }
 
   return (
     <div className="d-flex justify-content-center mt-4">
@@ -157,11 +238,13 @@ const Scores = () => {
           {uiScores.length > 0 && uiScores.map((scoreItem) => (
             <div key={scoreItem.id} className="list-group-item list-group-item-action d-flex justify-content-between align-items-center clickable"
             onClick={() => {
+              setDialogLoading(false);
+              setDialogError('');
               setCurrentTeamId(scoreItem.id);
               if (scoreItem.score || scoreItem.score === 0) {
                 setEditing(true);
                 setCurrentScore(scoreItem.score);
-                setCurrentFairplay(scoreItem.fairplay);
+                setCurrentFairplay(Boolean(scoreItem.fairplay));
               } else {
                 setEditing(false);
                 setCurrentScore('');

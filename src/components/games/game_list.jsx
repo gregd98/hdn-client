@@ -4,7 +4,7 @@ import { useHistory } from 'react-router-dom';
 import { useCookies } from 'react-cookie';
 import GameCard from './game_card.jsx';
 import { loadDays, loadAllGames, loadMyGames } from '../../actions/eventActions';
-import { restFetch2 } from '../../utils/communication';
+import { restGet } from '../../utils/communication';
 import * as Constants from '../../constants';
 import ErrorPage from '../error_page.jsx';
 import useScrollPosition from '../../utils/scroll';
@@ -45,9 +45,9 @@ const GameList = () => {
       loadFunc = loadMyGames;
     }
 
-    restFetch2(`${Constants.SERVER_PATH}api/days`, dispatch, removeCookie).then((resultDays) => {
+    restGet(`${Constants.SERVER_PATH}api/days`, dispatch, removeCookie).then((resultDays) => {
       dispatch(loadDays(resultDays.map((day) => new Date(day))));
-    }).then(() => restFetch2(gameUrl, dispatch, removeCookie))
+    }).then(() => restGet(gameUrl, dispatch, removeCookie))
       .then((resultGames) => {
         dispatch(loadFunc(resultGames));
       })

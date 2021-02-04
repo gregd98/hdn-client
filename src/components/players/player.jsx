@@ -4,7 +4,7 @@ import { useDispatch } from 'react-redux';
 import { useCookies } from 'react-cookie';
 import { getInformation } from '../../utils/cnp';
 import * as Constants from '../../constants';
-import { restFetch } from '../../utils/communication';
+import { restGet } from '../../utils/communication';
 import ErrorPage from '../error_page.jsx';
 
 const Player = () => {
@@ -17,9 +17,11 @@ const Player = () => {
   const removeCookie = cookies[2];
 
   useEffect(() => {
-    restFetch(`${Constants.SERVER_PATH}api/players/${id}`, (payload) => {
-      setPlayer(payload);
-    }, setPageError, dispatch, removeCookie);
+    restGet(`${Constants.SERVER_PATH}api/players/${id}`, dispatch, removeCookie).then((result) => {
+      setPlayer(result);
+    }).catch((error) => {
+      setPageError(error);
+    });
   }, [dispatch, id, removeCookie]);
 
   if (!pageError.message) {

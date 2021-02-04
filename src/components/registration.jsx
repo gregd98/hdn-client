@@ -1,24 +1,33 @@
 import React, { useEffect, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { useCookies } from 'react-cookie';
 import { signupConstraints as rules } from '../constraints/signupConstraints';
 import { isValidCNP } from '../utils/cnp';
 import calculatePasswordStrength from '../utils/password';
 import * as Constants from '../constants';
+import { restGet, restPut } from '../utils/communication';
+import { loadUserData, logIn } from '../actions/userActions';
+import ErrorPage from './error_page.jsx';
+import LoadingPage from './loading_page.jsx';
 
 const  classNames = require('classnames');
 const validate = require('validate.js');
 
 const trimDecorator = (value) => value.trim();
 const lowerCaseDecorator = (value) => value.toLowerCase();
-const upperCaseDecorator = (value) => value.toUpperCase();
+// const upperCaseDecorator = (value) => value.toUpperCase();
 const capitalizeDecorator = (value) => (
   value ? value[0].toUpperCase() + value.slice(1).toLowerCase() : value
 );
 const trimAllDecorator = (value) => value.replace(/\s/g, '');
 
+const useQuery = () => new URLSearchParams(useLocation().search);
+
 // eslint-disable-next-line max-lines-per-function
 const Registration = () => {
-  const [regCode, setRegCode] = useState({ value: '', error: '', ref: React.createRef() });
+  const query = useQuery();
+  // const [regCode, setRegCode] = useState({ value: '', error: '', ref: React.createRef() });
   const [firstName, setFirstName] = useState({ value: '', error: '', ref: React.createRef() });
   const [lastName, setLastName] = useState({ value: '', error: '', ref: React.createRef() });
   const [email, setEmail] = useState({ value: '', error: '', ref: React.createRef() });
@@ -34,10 +43,35 @@ const Registration = () => {
   const [password, setPassword] = useState({ value: '', error: '', ref: React.createRef() });
   const [confirmPassword, setConfirmPassword] = useState({ value: '', error: '', ref: React.createRef() });
   const [btnDisabled, setBtnDisabled] = useState(false);
+
+  const [regKey] = useState(query.get('key'));
+  const [pageError, setPageError] = useState({});
+  const [isLoading, setLoading] = useState(true);
+
   const history = useHistory();
 
+  const dispatch = useDispatch();
+  const cookies = useCookies();
+  const removeCookie = cookies[2];
+
+  useEffect(() => {
+    restGet(`${Constants.SERVER_PATH}api/userData`, dispatch, removeCookie).then((result) => {
+      dispatch(logIn());
+      dispatch(loadUserData(result));
+    });
+  }, [dispatch, removeCookie]);
+
+  useEffect(() => {
+    restGet(`${Constants.SERVER_PATH}api/regKey?key=${regKey}`, dispatch, removeCookie).then((result) => {
+      if (!result) {
+        setPageError({ message: 'Invalid registration link.' });
+      }
+      setLoading(false);
+    });
+  }, [dispatch, regKey, removeCookie]);
+
   const fields = {
-    regCode: { state: regCode, setState: setRegCode, order: 1 },
+    // regCode: { state: regCode, setState: setRegCode, order: 1 },
     firstName: { state: firstName, setState: setFirstName, order: 2 },
     lastName: { state: lastName, setState: setLastName, order: 3 },
     email: { state: email, setState: setEmail, order: 4 },
@@ -81,7 +115,7 @@ const Registration = () => {
   const signUpClicked = (event) => {
     event.preventDefault();
     const validation = validate({
-      regCode: regCode.value,
+      // regCode: regCode.value,
       firstName: firstName.value,
       lastName: lastName.value,
       email: email.value,
@@ -111,92 +145,75 @@ const Registration = () => {
       });
     } else {
       setBtnDisabled(true);
-      fetch(`${Constants.SERVER_PATH}api/signup`, {
-        method: 'POST',
-        credentials: 'include',
-        body: JSON.stringify({
-          regCode: regCode.value,
-          firstName: firstName.value,
-          lastName: lastName.value,
-          email: email.value,
-          phone: phone.value,
-          cnp: cnp.value,
-          shirtType: shirtType.selectedId,
-          shirtSize: shirtSize.selectedId,
-          username: username.value,
-          password: password.value,
-        }),
-      }).then((result) => result.json()).then((result) => {
-        if (result.succeed) {
-          console.log('WIN');
-          // TODO valami zoldet a loginra
-          history.push(`${Constants.APP_URL_PATH}login`);
-        } else {
-          setBtnDisabled(false);
-          if (result.message) {
-            console.log(result.message);
-            // TODO hibauzenet
-          } else {
-            let minOrder = 999,
-              minKey = '';
-            Object.entries(result.inputErrors)
-              .forEach(([key, value]) => {
-                if (fields[key].order < minOrder) {
-                  minOrder = fields[key].order;
-                  minKey = key;
-                }
-                fields[key].setState((rest) => ({ ...rest, error: value }));
-              });
-            fields[minKey].state.ref.current.scrollIntoView({
-              behavior: 'smooth',
-              block: 'start',
-            });
-          }
-        }
+      const body = {
+        // regCode: regCode.value,
+        regCode: regKey,
+        firstName: firstName.value,
+        lastName: lastName.value,
+        email: email.value,
+        phone: phone.value,
+        cnp: cnp.value,
+        shirtType: shirtType.selectedId,
+        shirtSize: shirtSize.selectedId,
+        username: username.value,
+        password: password.value,
+      };
+
+      restPut(`${Constants.SERVER_PATH}api/signup?key=${regKey}`, body, dispatch, removeCookie).then(() => {
+        // TODO valami zoldet a loginra
+        history.push(`${Constants.APP_URL_PATH}login`);
       }).catch((error) => {
         setBtnDisabled(false);
-        console.log(`Error: ${error.message}`);
-        // TODO netw error
+        if (error.inputErrors) {
+          let minOrder = 999,
+            minKey = '';
+          Object.entries(error.inputErrors)
+            .forEach(([key, value]) => {
+              if (fields[key].order < minOrder) {
+                minOrder = fields[key].order;
+                minKey = key;
+              }
+              fields[key].setState((rest) => ({ ...rest, error: value }));
+            });
+          fields[minKey].state.ref.current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          });
+        } else {
+          // TODO egyeb error
+          console.log(error.message);
+        }
       });
     }
   };
 
   useEffect(() => {
-    fetch(`${Constants.SERVER_PATH}api/shirtTypes`, {
-      method: 'GET',
-      credentials: 'include',
-    }).then((result) => result.json()).then((result) => {
-      if (result.succeed) {
-        setShirtType((state) => ({ ...state, options: result.payload }));
-      } else {
-        // TODO ha nem tudjuk betolteni
-      }
-    });
-    fetch(`${Constants.SERVER_PATH}api/shirtSizes`, {
-      method: 'GET',
-      credentials: 'include',
-    }).then((result) => result.json()).then((result) => {
-      if (result.succeed) {
-        setShirtSize((state) => ({ ...state, options: result.payload }));
-      } else {
-        // TODO ha nem tudjuk betolteni
-      }
-    });
-  }, []);
+    restGet(`${Constants.SERVER_PATH}api/shirtTypes`, dispatch, removeCookie).then((result) => {
+      setShirtType((state) => ({ ...state, options: result }));
+    }).then(() => restGet(`${Constants.SERVER_PATH}api/shirtSizes`, dispatch, removeCookie)).then((result) => {
+      setShirtSize((state) => ({ ...state, options: result }));
+    })
+      .catch((error) => {
+      // TODO load error
+        console.log(error.message);
+      });
+  }, [dispatch, removeCookie]);
 
   const loginClicked = () => {
     history.push(`${Constants.APP_URL_PATH}login`);
   };
 
+  if (pageError.message) {
+    return <ErrorPage status={pageError.status} message={pageError.message} />;
+  }
+
+  if (isLoading) {
+    return <LoadingPage />;
+  }
+
   return (
     <div className="d-flex justify-content-center">
       <form onSubmit={signUpClicked}>
-        <Card title="Validation">
-          <FormGroup na={regCode.ref}>
-            <Input type="text" id="inputRegistrationCode" label="Registration code" state={regCode} setState={setRegCode} constraint={{ value: rules.regCode }} decorators={
-              [trimDecorator, upperCaseDecorator]} />
-          </FormGroup>
-        </Card>
         <Card title="Personal data">
           <FormRow>
             <FormGroup mdSize="6" na={firstName.ref}>

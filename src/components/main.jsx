@@ -14,13 +14,16 @@ import Players from './players/players.jsx';
 import Games from './games/games.jsx';
 import Game from './games/game.jsx';
 import GameForm from './games/game_form.jsx';
-import { restFetch2 } from '../utils/communication';
+import { restGet } from '../utils/communication';
 import Scores from './games/scores.jsx';
-import ScoreTable from './ScoreTable.jsx';
+import ScoreTable from './score_table.jsx';
+import Invitations from './invitations.jsx';
+import Events from './events.jsx';
 
 const Main = () => {
   const userData = useSelector((state) => state.user.userData);
   const userPermissions = useSelector((state) => state.user.permissions);
+  const loggedIn = useSelector((state) => state.user.loggedIn);
   const { path, url } = useRouteMatch();
   const dispatch = useDispatch();
 
@@ -28,19 +31,19 @@ const Main = () => {
   const removeCookie = cookies[2];
 
   useEffect(() => {
-    restFetch2(`${Constants.SERVER_PATH}api/userData`, dispatch, removeCookie).then((result) => {
+    restGet(`${Constants.SERVER_PATH}api/userData`, dispatch, removeCookie).then((result) => {
       dispatch(loadUserData(result));
-    }).then(() => restFetch2(`${Constants.SERVER_PATH}api/userPermissions`, dispatch, removeCookie))
+    }).then(() => restGet(`${Constants.SERVER_PATH}api/userPermissions`, dispatch, removeCookie))
       .then((result) => {
         dispatch(loadPermissions(result));
       })
       .catch((error) => {
         console.log(`Error: ${error.message}`);
       });
-  }, []);
+  }, [dispatch, removeCookie, loggedIn]);
 
   const logoutClicked = () => {
-    restFetch2(`${Constants.SERVER_PATH}api/logout`, dispatch, removeCookie).then(() => {
+    restGet(`${Constants.SERVER_PATH}api/logout`, dispatch, removeCookie).then(() => {
       removeCookie('loggedin', { path: '/' });
       dispatch(logOut());
     }).catch((error) => {
@@ -71,8 +74,24 @@ const Main = () => {
                 <NavbarItem to={`${Constants.APP_URL_PATH}players`} title="Players" />
               </React.Fragment>
             )}
-            {userPermissions.includes(Constants.PERM_SCORE_TABLE_ACCESS) && (
-              <NavbarItem to={`${Constants.APP_URL_PATH}scores`} title="Scores" />
+            {(userPermissions.includes(Constants.PERM_CONTENT_ADMIN)
+              || userPermissions.includes(Constants.PERM_SYSTEM_ADMIN)) && (
+              <li className="nav-item dropdown">
+                <button className="btn btn-link nav-link dropdown-toggle shadow-none" data-toggle="dropdown">
+                  Admin tools
+                </button>
+                <div className="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                  <Link to={`${Constants.APP_URL_PATH}scores`} className="btn shadow-none dropdown-item">Score table</Link>
+                  {userPermissions.includes(Constants.PERM_SYSTEM_ADMIN) && (
+                    <React.Fragment>
+                      <Link to={`${Constants.APP_URL_PATH}users`} className="btn shadow-none dropdown-item">Users</Link>
+                      <Link to={`${Constants.APP_URL_PATH}roles`} className="btn shadow-none dropdown-item">Roles</Link>
+                      <Link to={`${Constants.APP_URL_PATH}events`} className="btn shadow-none dropdown-item">Events</Link>
+                      <Link to={`${Constants.APP_URL_PATH}invitations`} className="btn shadow-none dropdown-item">Invitations</Link>
+                    </React.Fragment>
+                  )}
+                </div>
+              </li>
             )}
           </ul>
           <ul className="navbar-nav mt-2 mt-lg-0">
@@ -125,6 +144,12 @@ const Main = () => {
           </Route>
           <Route path={`${Constants.APP_URL_PATH}players/:id`}>
             <Player />
+          </Route>
+          <Route path={`${Constants.APP_URL_PATH}invitations`}>
+            <Invitations />
+          </Route>
+          <Route path={`${Constants.APP_URL_PATH}events`}>
+            <Events />
           </Route>
           <Route path={`${Constants.APP_URL_PATH}account`}>
             <h1>Account</h1>

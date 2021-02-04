@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useCookies } from 'react-cookie';
 import * as Constants from '../constants';
-import { restFetch2 } from '../utils/communication';
+import { restGet } from '../utils/communication';
 import { loadTeams } from '../actions/teamsActions';
 import { loadAllScores } from '../actions/eventActions';
 
@@ -15,9 +15,9 @@ const ScoreTable = () => {
   const removeCookie = cookies[2];
 
   useEffect(() => {
-    restFetch2(`${Constants.SERVER_PATH}api/teams`, dispatch, removeCookie).then((result) => {
+    restGet(`${Constants.SERVER_PATH}api/teams`, dispatch, removeCookie).then((result) => {
       dispatch(loadTeams(result));
-    }).then(() => restFetch2(`${Constants.SERVER_PATH}api/scores`, dispatch, removeCookie)).then((result) => {
+    }).then(() => restGet(`${Constants.SERVER_PATH}api/scores`, dispatch, removeCookie)).then((result) => {
       dispatch(loadAllScores(result));
     })
       .catch((error) => {
@@ -32,7 +32,7 @@ const ScoreTable = () => {
       <thead>
         <tr>
           <th scope="col">Games</th>
-          {teams.map((team) => <th key={team.id} scope="col">{team.name}</th>)}
+          {teams.map((team) => <th key={team.id} scope="col" className="text-center">{team.name}</th>)}
         </tr>
       </thead>
       <tbody>

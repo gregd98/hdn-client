@@ -16,17 +16,17 @@ const nameConstraint = {
 
 // eslint-disable-next-line import/prefer-default-export
 export const signupConstraints = {
-  regCode: {
-    presence: required,
-    length: {
-      is: 10,
-      wrongLength: 'Enter a valid registration code.',
-    },
-    format: {
-      pattern: '[A-Z|0-9]+',
-      message: 'Enter a valid registration code.',
-    },
-  },
+  // regCode: {
+  //   presence: required,
+  //   length: {
+  //     is: 10,
+  //     wrongLength: 'Enter a valid registration code.',
+  //   },
+  //   format: {
+  //     pattern: '[A-Z|0-9]+',
+  //     message: 'Enter a valid registration code.',
+  //   },
+  // },
   firstName: nameConstraint,
   lastName: nameConstraint,
   email: {

@@ -4,7 +4,7 @@ import { useCookies } from 'react-cookie';
 import * as Constants from '../../constants';
 import { loadPlayers } from '../../actions/teamsActions';
 import PlayerList from './player_list.jsx';
-import { restFetch2 } from '../../utils/communication';
+import { restGet } from '../../utils/communication';
 import ErrorPage from '../error_page.jsx';
 
 const Players = () => {
@@ -18,7 +18,7 @@ const Players = () => {
   const removeCookie = cookies[2];
 
   useEffect(() => {
-    restFetch2(`${Constants.SERVER_PATH}api/players`, dispatch, removeCookie).then((result) => {
+    restGet(`${Constants.SERVER_PATH}api/players`, dispatch, removeCookie).then((result) => {
       dispatch(loadPlayers(result));
     }).catch((error) => {
       setPageError(error);

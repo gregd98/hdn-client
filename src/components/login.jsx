@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useCookies } from 'react-cookie';
 import { useHistory } from 'react-router-dom';
-import { logIn } from '../actions/userActions';
+import { loadUserData, logIn } from '../actions/userActions';
 import * as Constants from '../constants';
+import { restGet, restPost } from '../utils/communication';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -11,24 +12,19 @@ const Login = () => {
   const [btnDisabled, setBtnDisabled] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const [cookies, setCookie] = useCookies();
+  const cookies = useCookies();
+  const setCookie = cookies[1];
+  const removeCookie = cookies[2];
 
   const dispatch = useDispatch();
   const history = useHistory();
 
   useEffect(() => {
-    fetch(`${Constants.SERVER_PATH}api/userData`, {
-      method: 'GET',
-      credentials: 'include',
-    }).then((result) => result.json()).then((result) => {
-      if (result.succeed) {
-        console.log('Login succeed.');
-        dispatch(logIn(result.payload));
-      }
-    }).catch((error) => {
-      console.log(`Error: ${error.message}`);
+    restGet(`${Constants.SERVER_PATH}api/userData`, dispatch, removeCookie).then((result) => {
+      dispatch(logIn());
+      dispatch(loadUserData(result));
     });
-  }, [dispatch]);
+  }, [dispatch, removeCookie]);
 
   const handleUsernameChange = (event) => {
     setUsername(event.target.value);
@@ -40,29 +36,13 @@ const Login = () => {
 
   const loginClicked = (event) => {
     event.preventDefault();
-    console.log(`Username: ${username}\nPassword: ${password}`);
-    console.log('Login clicked.');
-
     setBtnDisabled(true);
-
-    fetch(`${Constants.SERVER_PATH}api/login`, {
-      method: 'POST',
-      credentials: 'include',
-      body: JSON.stringify({ username, password }),
-    }).then((result) => result.json()).then((result) => {
-      if (result.succeed) {
-        setCookie('loggedin', '1', { path: '/' });
-        console.log(cookies);
-        dispatch(logIn(result.userData));
-      } else {
-        console.log('Login failed.');
-        setErrorMessage(result.message);
-        setBtnDisabled(false);
-      }
+    restPost(`${Constants.SERVER_PATH}api/login`, { username, password }, dispatch, removeCookie).then(() => {
+      setCookie('loggedin', '1', { path: '/' });
+      dispatch(logIn());
     }).catch((error) => {
-      console.log(`Error: ${error.message}`);
       setBtnDisabled(false);
-      setErrorMessage('Network error.');
+      setErrorMessage(error.message);
     });
   };
 

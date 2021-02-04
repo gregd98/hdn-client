@@ -21,7 +21,7 @@ function App() {
           <PublicRoute path={`${Constants.APP_URL_PATH}login`}>
             <Login />
           </PublicRoute>
-          <PublicRoute path={`${Constants.APP_URL_PATH}registration`}>
+          <PublicRoute exact path={`${Constants.APP_URL_PATH}registration`}>
             <Registration />
           </PublicRoute>
           <PrivateRoute path={`${Constants.APP_URL_PATH}`}>
@@ -37,17 +37,6 @@ function App() {
       </Router>
     </React.Fragment>
   );
-
-  // function PrivateRoute(input) {
-  //   const { children, ...rest } = input;
-  //   const [cookies] = useCookies(['loggedin']);
-  //   return <Route {...rest} render={() => ((cookies.loggedin === '1' || loggedIn) ? (children) : (<Redirect to={{ pathname: `${Constants.APP_URL_PATH}login` }} />))} />;
-  // }
-  //
-  // function PublicRoute(input) {
-  //   const { children, ...rest } = input;
-  //   return <Route {...rest} render={() => (loggedIn ? (<Redirect to={{ pathname: `${Constants.APP_URL_PATH}` }} />) : (children))} />;
-  // }
 
   function PrivateRoute({ children, ...rest }) {
     const [cookies] = useCookies(['loggedin']);

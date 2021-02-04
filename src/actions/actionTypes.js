@@ -18,3 +18,6 @@ export const actionSetCurrentGameTab = 'SET_CURRENT_GAME_TAB';
 export const actionLoadGame = 'LOAD_GAME';
 export const actionLoadScores = 'LOAD_SCORES';
 export const actionLoadAllScores = 'LOAD_ALL_SCORES';
+
+export const actionLoadInvitations = 'LOAD_INVITATIONS';
+export const actionLoadEvents = 'LOAD_EVENTS';

@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useCookies } from 'react-cookie';
 import { useHistory, useParams } from 'react-router-dom';
 import { gameConstraints as rules } from '../../constraints/gameConstraints';
-import { restFetch2 } from '../../utils/communication';
+import {restGet, restPost, restPut} from '../../utils/communication';
 import * as Constants from '../../constants';
 import { loadGame } from '../../actions/eventActions';
 import { getTimeByDate, getLongByDate } from '../../utils/mysql_date';
@@ -45,8 +45,6 @@ const GameForm = (input) => {
   const removeCookie = cookies[2];
 
   validate.validators.selector = (value) => {
-    console.log('Day:');
-    console.log(value);
     if (!value) {
       return 'This field is required.';
     }
@@ -55,7 +53,7 @@ const GameForm = (input) => {
 
   useEffect(() => {
     if (edit) {
-      restFetch2(`${Constants.SERVER_PATH}api/games/${id}`, dispatch, removeCookie).then((result) => {
+      restGet(`${Constants.SERVER_PATH}api/games/${id}`, dispatch, removeCookie).then((result) => {
         dispatch(loadGame(result));
       })
         .catch((error) => {
@@ -96,7 +94,7 @@ const GameForm = (input) => {
   }, [edit, gamesData, id]);
 
   useEffect(() => {
-    restFetch2(`${Constants.SERVER_PATH}api/days`, dispatch, removeCookie).then((resultDays) => {
+    restGet(`${Constants.SERVER_PATH}api/days`, dispatch, removeCookie).then((resultDays) => {
       setDay({
         ...day,
         options: resultDays.map((item) => {
@@ -186,18 +184,15 @@ const GameForm = (input) => {
       const url = edit ? `${Constants.SERVER_PATH}api/games/${id}` : `${Constants.SERVER_PATH}api/games`;
 
       setBtnDisabled(true);
-      fetch(url, {
-        method: edit ? 'POST' : 'PUT',
-        credentials: 'include',
-        body: JSON.stringify(data),
-      }).then((result) => result.json()).then((result) => {
+      (edit ? restPost : restPut)(url, data, dispatch, removeCookie).then(() => {
         setBtnDisabled(false);
-        if (result.succeed) {
-          history.replace(edit ? `${Constants.APP_URL_PATH}games/${id}` : `${Constants.APP_URL_PATH}games`);
-        } else {
+        history.replace(edit ? `${Constants.APP_URL_PATH}games/${id}` : `${Constants.APP_URL_PATH}games`);
+      }).catch((error) => {
+        setBtnDisabled(false);
+        if (error.inputErrors) {
           let minOrder = 999,
             minKey = '';
-          Object.entries(result.inputErrors)
+          Object.entries(error.inputErrors)
             .forEach(([key, value]) => {
               if (fields[key].order < minOrder) {
                 minOrder = fields[key].order;
@@ -209,6 +204,9 @@ const GameForm = (input) => {
             behavior: 'smooth',
             block: 'start',
           });
+        } else {
+          // TODO egyeb error
+          console.log(error.message);
         }
       });
     }

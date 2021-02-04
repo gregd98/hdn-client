@@ -1,49 +1,22 @@
 import { logOut } from '../actions/userActions';
 
-export const restFetch = (url, onSucces, errorSetter, dispatch, removeCookie) => new Promise((resolve) => {
-  const payload = {};
-  fetch(url, {
-    method: 'GET',
-    credentials: 'include',
-  }).then((result) => {
-    payload.status = result.status;
-    return result.json();
-  }).then((result) => {
-    if (result.succeed) {
-      errorSetter({});
-      onSucces(result.payload);
-      resolve();
-    } else if (!result.authenticated) {
-      removeCookie('loggedin', { path: '/' });
-      dispatch(logOut());
-      resolve();
-    } else {
-      payload.message = result.message;
-      console.log(payload);
-      errorSetter(payload);
-      resolve();
-    }
-  }).catch((error) => {
-    errorSetter({ message: 'Failed to connect to the server.' });
-    console.log(`Error: ${error.message}`);
-    resolve();
-  });
-});
-
-export const restFetch2 = (url, dispatch, removeCookie) => new Promise(
+const communication = (url, method, body, dispatch, removeCookie) => new Promise(
   (resolve, reject) => {
     const payload = {};
-    fetch(url, {
-      method: 'GET',
-      credentials: 'include',
-    }).then((result) => {
+    const init = { method, credentials: 'include' };
+    if (body) {
+      init.body = JSON.stringify(body);
+    }
+    fetch(url, init).then((result) => {
       payload.status = result.status;
       return result.json();
     }).then((result) => {
       if (result.succeed) {
-      // errorSetter({});
-        // onSucces(result.payload);
-        resolve(result.payload);
+        if (method === 'GET') {
+          resolve(result.payload);
+        } else {
+          resolve();
+        }
       } else if (!result.authenticated) {
         removeCookie('loggedin', { path: '/' });
         dispatch(logOut());
@@ -51,16 +24,32 @@ export const restFetch2 = (url, dispatch, removeCookie) => new Promise(
         reject(payload);
       } else {
         payload.message = result.message;
+        if (result.inputErrors) {
+          payload.inputErrors =  result.inputErrors;
+        }
         console.log(payload);
-        // errorSetter(payload);
-        // onError(payload);
         reject(payload);
       }
     }).catch((error) => {
-    // errorSetter({ message: 'Failed to connect to the server.' });
       console.log(`Error: ${error.message}`);
       payload.message = 'Failed to connect to the server.';
       reject(payload);
     });
   },
 );
+
+export const restGet = (url, dispatch, removeCookie) => new Promise((resolve, reject) => {
+  communication(url, 'GET', null, dispatch, removeCookie).then((result) => resolve(result)).catch((error) => reject(error));
+});
+
+export const restDelete = (url, dispatch, removeCookie) => new Promise((resolve, reject) => {
+  communication(url, 'DELETE', null, dispatch, removeCookie).then((result) => resolve(result)).catch((error) => reject(error));
+});
+
+export const restPut = (url, body, dispatch, removeCookie) => new Promise((resolve, reject) => {
+  communication(url, 'PUT', body, dispatch, removeCookie).then((result) => resolve(result)).catch((error) => reject(error));
+});
+
+export const restPost = (url, body, dispatch, removeCookie) => new Promise((resolve, reject) => {
+  communication(url, 'POST', body, dispatch, removeCookie).then((result) => resolve(result)).catch((error) => reject(error));
+});

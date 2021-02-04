@@ -14,9 +14,12 @@ const defaultState = {
 
 const userReducer = (state = defaultState, action) => {
   switch (action.type) {
-    case actionLogIn: case actionLoadUserData:
+    case actionLogIn:
       return produce(state, (draft) => {
         draft.loggedIn = true;
+      });
+    case actionLoadUserData:
+      return produce(state, (draft) => {
         draft.userData = action.payload;
       });
     case actionLogOut:

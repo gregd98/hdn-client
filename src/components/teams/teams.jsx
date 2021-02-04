@@ -4,7 +4,7 @@ import { useCookies } from 'react-cookie';
 import { useHistory, useRouteMatch } from 'react-router-dom';
 import * as Constants from '../../constants';
 import { loadContacts, loadTeams } from '../../actions/teamsActions';
-import { restFetch } from '../../utils/communication';
+import { restGet } from '../../utils/communication';
 import ErrorPage from '../error_page.jsx';
 import LoadingPage from '../loading_page.jsx';
 
@@ -24,16 +24,18 @@ const Teams = () => {
 
   useEffect(() => {
     if (teams.length === 0) {
-      console.log('Loading on');
       setLoading(true);
     }
-    restFetch(`${Constants.SERVER_PATH}api/teams`, (payload) => {
-      dispatch(loadTeams(payload));
-    }, setPageError, dispatch, removeCookie).then(() => restFetch(`${Constants.SERVER_PATH}api/leaderContacts`, (payload) => {
-      dispatch(loadContacts(payload));
-    }, setPageError, dispatch, removeCookie).then(() => {
+    restGet(`${Constants.SERVER_PATH}api/teams`, dispatch, removeCookie).then((result) => {
+      dispatch(loadTeams(result));
+    }).then(() => restGet(`${Constants.SERVER_PATH}api/leaderContacts`, dispatch, removeCookie)).then((result) => {
       setLoading(false);
-    }));
+      dispatch(loadContacts(result));
+    })
+      .catch((error) => {
+        setLoading(false);
+        setPageError(error);
+      });
   }, [dispatch, removeCookie, teams.length]);
 
   if (pageError.message) {

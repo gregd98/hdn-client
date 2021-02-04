@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useHistory } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useCookies } from 'react-cookie';
-import { restFetch2 } from '../../utils/communication';
+import { restDelete, restGet, restPost } from '../../utils/communication';
 import * as Constants from '../../constants';
 import { loadGame } from '../../actions/eventActions';
 import { loadPersons } from '../../actions/staffActions';
 import { getTimeByDate, getWeekdayByDate } from '../../utils/mysql_date';
+import ErrorPage from '../error_page.jsx';
+import LoadingPage from '../loading_page.jsx';
 
 const classNames = require('classnames');
 
@@ -24,16 +26,24 @@ const Game = () => {
   const [dialogLoading, setDialogLoading] = useState(false);
   const [dialogError, setDialogError] = useState('');
 
+  const [pageError, setPageError] = useState({});
+  const [isLoading, setLoading] = useState(false);
+
   useEffect(() => {
-    restFetch2(`${Constants.SERVER_PATH}api/games/${id}`, dispatch, removeCookie).then((result) => {
+    if (!gameData[id]) {
+      setLoading(true);
+    }
+    restGet(`${Constants.SERVER_PATH}api/games/${id}`, dispatch, removeCookie).then((result) => {
       dispatch(loadGame(result));
-    }).then(() => restFetch2(`${Constants.SERVER_PATH}api/users`, dispatch, removeCookie)).then((persons) => {
+    }).then(() => restGet(`${Constants.SERVER_PATH}api/users`, dispatch, removeCookie)).then((persons) => {
       dispatch(loadPersons(persons));
+      setLoading(false);
     })
       .catch((error) => {
-        console.log(error.message);
+        setPageError(error);
+        setLoading(false);
       });
-  }, [dispatch, id, removeCookie]);
+  }, [dispatch, gameData, id, removeCookie]);
 
   useEffect(() => {
     const removeModal = () => {
@@ -52,65 +62,39 @@ const Game = () => {
 
   const updateContributors = () => {
     setDialogLoading(true);
-    fetch(`${Constants.SERVER_PATH}api/games/${id}/assignments`, {
-      method: 'POST',
-      credentials: 'include',
-      body: JSON.stringify(Array.from(contributors)),
-    }).then((result) => result.json()).then((result) => {
+    restPost(`${Constants.SERVER_PATH}api/games/${id}/assignments`, Array.from(contributors), dispatch, removeCookie).then(() => {
       setDialogLoading(false);
-      if (result.succeed) {
-        window.$('#listModal').modal('hide');
-        restFetch2(`${Constants.SERVER_PATH}api/games/${id}`, dispatch, removeCookie).then((res) => {
-          dispatch(loadGame(res));
-        }).catch((error) => {
-          console.log(error.message);
-        });
-      } else {
-        setDialogError(result.message);
-      }
+      window.$('#listModal').modal('hide');
+      restGet(`${Constants.SERVER_PATH}api/games/${id}`, dispatch, removeCookie).then((res) => {
+        dispatch(loadGame(res));
+      }).catch((error) => {
+        setPageError(error);
+      });
     }).catch((error) => {
       setDialogLoading(false);
-      setDialogError('Network error.');
-      console.log(`Network error: ${error.messageg}`);
+      setDialogError(error.message);
     });
   };
 
   const moveOwner = (userId) => {
     setDialogLoading(true);
-    fetch(`${Constants.SERVER_PATH}api/games/${id}/moveOwner`, {
-      method: 'POST',
-      credentials: 'include',
-      body: JSON.stringify(userId),
-    }).then((result) => result.json()).then((result) => {
+    restPost(`${Constants.SERVER_PATH}api/games/${id}/moveOwner`, userId, dispatch, removeCookie).then(() => {
       setDialogLoading(false);
-      if (result.succeed) {
-        history.push(`${Constants.APP_URL_PATH}games`);
-      } else {
-        setDialogError(result.message);
-      }
+      history.push(`${Constants.APP_URL_PATH}games`);
     }).catch((error) => {
       setDialogLoading(false);
-      setDialogError('Network error.');
-      console.log(error.message);
+      setDialogError(error.message);
     });
   };
 
   const deleteGame = () => {
     setDialogLoading(true);
-    fetch(`${Constants.SERVER_PATH}api/games/${id}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    }).then((result) => result.json()).then((result) => {
+    restDelete(`${Constants.SERVER_PATH}api/games/${id}`, dispatch, removeCookie).then(() => {
       setDialogLoading(false);
-      if (result.succeed) {
-        history.push(`${Constants.APP_URL_PATH}games`);
-      } else {
-        setDialogError(result.message);
-      }
+      history.push(`${Constants.APP_URL_PATH}games`);
     }).catch((error) => {
       setDialogLoading(false);
-      setDialogError('Network error.');
-      console.log(error.message);
+      setDialogError(error.message);
     });
   };
 
@@ -142,14 +126,14 @@ const Game = () => {
   );
 
   const renderModal = (input) => {
-    const { errorMessage, isLoading } = input;
+    const { errorMessage, isDialogLoading } = input;
     return (
       <div className="modal fade" id="listModal" data-backdrop="static" data-keyboard="false" tabIndex="-1">
         <div className="modal-dialog modal-dialog-scrollable">
           <div className="modal-content">
             <div className="modal-header">
               <h5 className="modal-title">{assignmentsModal ? 'Select contributors' : 'Move ownership to:'}</h5>
-              <button type="button" className="close" data-dismiss="modal" aria-label="Close">
+              <button type="button" className="close" data-dismiss="modal" aria-label="Close" disabled={isDialogLoading}>
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
@@ -162,12 +146,12 @@ const Game = () => {
               })}
             </div>
             <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" data-dismiss="modal">Close</button>
+              <button type="button" className="btn btn-secondary" data-dismiss="modal" disabled={isDialogLoading}>Close</button>
               {assignmentsModal && (
                 <button onClick={() => {
                   updateContributors();
-                }} type="button" className="btn btn-primary" disabled={isLoading}>
-                  {isLoading && <span className="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true" />}
+                }} type="button" className="btn btn-primary" disabled={isDialogLoading}>
+                  {isDialogLoading && <span className="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true" />}
                   Save changes
                 </button>
               )};
@@ -255,9 +239,9 @@ const Game = () => {
             </Card>
           )}
         </div>
-        {renderModal({ errorMessage: dialogError, isLoading: dialogLoading })}
+        {renderModal({ errorMessage: dialogError, isDialogLoading: dialogLoading })}
 
-        <ConfirmationDialog errorMessage={dialogError} isLoading={dialogLoading} id="moveOwnerDialog" title="Move ownership" text={
+        <ConfirmationDialog errorMessage={dialogError} isDialogLoading={dialogLoading} id="moveOwnerDialog" title="Move ownership" text={
           (
             <React.Fragment>
               {'Do you want to move '}<b>{game.name}</b>{'\'s ownership to '}<b>{newOwner.lastName} {newOwner.firstName}?</b>
@@ -267,7 +251,7 @@ const Game = () => {
           moveOwner(newOwner.id);
         }} />
 
-        <ConfirmationDialog errorMessage={dialogError} isLoading={dialogLoading} id="deleteGameDialog" title="Delete game" text={
+        <ConfirmationDialog errorMessage={dialogError} isDialogLoading={dialogLoading} id="deleteGameDialog" title="Delete game" text={
           (
             <React.Fragment>
               {'Do you want to delete '}<b>{game.name}</b>?
@@ -281,10 +265,18 @@ const Game = () => {
       </div>
     );
   };
+
+  if (pageError.message) {
+    return <ErrorPage status={pageError.status} message={pageError.message} />;
+  }
+
+  if (isLoading) {
+    return <LoadingPage />;
+  }
   if (gameData[id]) {
     return renderGamePage();
   }
-  return <h4>Loading</h4>;
+  return <LoadingPage />;
 };
 
 const Card = (prop) => (
@@ -305,7 +297,7 @@ const DetailItem = (input) => (
 
 const ConfirmationDialog = (input) => {
   const {
-    id, title, text, confirmBtnText, btnHandler, errorMessage, isLoading,
+    id, title, text, confirmBtnText, btnHandler, errorMessage, isDialogLoading,
   } = input;
   let { btnType } = input;
   if (!btnType) {
@@ -329,8 +321,8 @@ const ConfirmationDialog = (input) => {
           <div className="modal-body">{text}</div>
           <div className="modal-footer">
             <button type="button" className="btn btn-secondary" data-dismiss="modal">Cancel</button>
-            <button onClick={() => btnHandler()} type="button" className={classes} disabled={isLoading}>
-              {isLoading && <span className="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true" />}
+            <button onClick={() => btnHandler()} type="button" className={classes} disabled={isDialogLoading}>
+              {isDialogLoading && <span className="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true" />}
               {confirmBtnText}
             </button>
           </div>

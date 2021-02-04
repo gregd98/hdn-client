@@ -5,7 +5,7 @@ import { useCookies } from 'react-cookie';
 import * as Constants from '../../constants';
 import { loadTeam } from '../../actions/teamsActions';
 import PlayerList from '../players/player_list.jsx';
-import { restFetch } from '../../utils/communication';
+import { restGet } from '../../utils/communication';
 import ErrorPage from '../error_page.jsx';
 import LoadingPage from '../loading_page.jsx';
 
@@ -23,10 +23,12 @@ const Team = () => {
     if (!teamsData[id]) {
       setLoading(true);
     }
-    restFetch(`${Constants.SERVER_PATH}api/teams/${id}`, (payload) => {
-      dispatch(loadTeam(payload));
-    }, setPageError, dispatch, removeCookie).then(() => {
+    restGet(`${Constants.SERVER_PATH}api/teams/${id}`, dispatch, removeCookie).then((result) => {
       setLoading(false);
+      dispatch(loadTeam(result));
+    }).catch((error) => {
+      setLoading(false);
+      setPageError({ status: error.status, message: error.message });
     });
   }, [dispatch, id, removeCookie]);
 

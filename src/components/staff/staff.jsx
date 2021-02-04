@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useCookies } from 'react-cookie';
 import * as Constants from '../../constants';
 import { loadPosts, loadPersons } from '../../actions/staffActions';
-import { restFetch2 } from '../../utils/communication';
+import { restGet } from '../../utils/communication';
 import StaffList from './staff_list.jsx';
 
 const classNames = require('classnames');
@@ -33,12 +33,12 @@ const Staff = () => {
   }, []);
 
   useEffect(() => {
-    restFetch2(`${Constants.SERVER_PATH}api/posts`, dispatch, removeCookie).then((result) => {
+    restGet(`${Constants.SERVER_PATH}api/posts`, dispatch, removeCookie).then((result) => {
       dispatch(loadPosts(result));
       if (result.length > 0) {
         setActivePostId(result[0].id);
       }
-    }).then(() => restFetch2(`${Constants.SERVER_PATH}api/users`, dispatch, removeCookie)).then((result) => {
+    }).then(() => restGet(`${Constants.SERVER_PATH}api/users`, dispatch, removeCookie)).then((result) => {
       dispatch(loadPersons(result));
     })
       .catch((error) => {
